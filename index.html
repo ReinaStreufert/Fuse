@@ -1,0 +1,968 @@
+<html>
+	<head>
+		<link href="https://fonts.googleapis.com/css?family=Roboto:300,400&display=swap" rel="stylesheet">
+		<style>
+		html, body {
+			height: 100%;
+			margin: 0;
+		}
+		body {
+			background: white;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+		}
+		canvas {
+			background: #FFFFFF;
+		}
+		</style>
+	</head>
+	<body>
+		<canvas id="game" width="1000" height="800"></canvas>
+		<script>
+		window.onerror = function(message, source, line, col, error) {
+			alert(line + ':' + col + ': ' + message);
+		}
+		</script>
+		<script>
+		var lvldata = [
+			{
+				tuttext: [
+					'Start by moving your mouse to the highlighted circle',
+					'Move along the line to the ending checkpoint, follow it closely',
+					"That's it!",
+					'Great! Press space to move onto the next level'
+				],
+				pts: [
+					{
+						x: 200,
+						y: 400,
+						type: 'checkpoint',
+						thickness: 20
+					},
+					{
+						x: 800,
+						y: 400,
+						type: 'checkpoint',
+						thickness: 10
+					}
+				],
+				fusespeed: 0,
+				name: '#1: Introduction'
+			},
+			{
+				tuttext: [
+					"Careful, this time the line will burn behind you like a fuse! Outrun it to the ending checkpoint",
+					"Careful, this time the line will burn behind you like a fuse! Outrun it to the ending checkpoint",
+					'Move!',
+					'Great!'
+				],
+				pts: [
+					{
+						x: 200,
+						y: 400,
+						type: 'checkpoint',
+						thickness: 30
+					},
+					{
+						x: 300,
+						y: 400,
+						type: 'midpoint',
+						thickness: 10
+					},
+					{
+						x: 350,
+						y: 450,
+						type: 'midpoint',
+						thickness: 10
+					},
+					{
+						x: 400,
+						y: 350,
+						type: 'midpoint',
+						thickness: 10
+					},
+					{
+						x: 450,
+						y: 450,
+						type: 'midpoint',
+						thickness: 10
+					},
+					{
+						x: 500,
+						y: 400,
+						type: 'midpoint',
+						thickness: 10
+					},
+					{
+						x: 800,
+						y: 400,
+						type: 'checkpoint',
+						thickness: 10
+					},
+				],
+				fusespeed: 200,
+				name: "#2: Under Pressure"
+			},
+			{"tuttext":["Levels can have more than 1 checkpoint! See what happens when you fail after getting to a checkpoint in the middle","","","Great!"],"pts":[{"x":200,"y":400,"type":"checkpoint","thickness":20,"animation":null,"filled":false},{"x":400,"y":550,"type":"midpoint","thickness":20,"animation":null},{"x":500,"y":550,"type":"checkpoint","thickness":20,"animation":null,"filled":false},{"x":600,"y":550,"type":"midpoint","thickness":20,"animation":null},{"x":800,"y":400,"type":"checkpoint","thickness":20,"animation":null,"filled":false},{"x":600,"y":250,"type":"midpoint","thickness":20,"animation":null},{"x":500,"y":250,"type":"checkpoint","thickness":20,"animation":null,"filled":false}],"fusespeed":200,"name":"#3: Life Saver"},
+			{"tuttext":["You are ready. You're on your own for now, good luck","","",""],"pts":[{"x":200,"y":400,"type":"checkpoint","thickness":20,"animation":null,"filled":false},{"x":300,"y":400,"type":"midpoint","thickness":20,"animation":null},{"x":400,"y":350,"type":"midpoint","thickness":20,"animation":null},{"x":400,"y":400,"type":"midpoint","thickness":20,"animation":null},{"x":500,"y":300,"type":"midpoint","thickness":20,"animation":null},{"x":500,"y":400,"type":"checkpoint","thickness":20,"animation":null,"filled":false},{"x":600,"y":250,"type":"midpoint","thickness":20,"animation":null},{"x":600,"y":400,"type":"checkpoint","thickness":20,"animation":null,"filled":false},{"x":700,"y":200,"type":"midpoint","thickness":20,"animation":null},{"x":700,"y":400,"type":"midpoint","thickness":20,"animation":null},{"x":800,"y":400,"type":"checkpoint","thickness":20,"animation":null,"filled":false}],"fusespeed":200,"name":"#4: Mountains"},
+			{"tuttext":["","","",""],"pts":[{"x":200,"y":400,"type":"checkpoint","thickness":20,"animation":null,"filled":false},{"x":450,"y":300,"type":"midpoint","thickness":20,"animation":null,"filled":false},{"x":450,"y":200,"type":"midpoint","thickness":20,"animation":null,"filled":true},{"x":550,"y":200,"type":"midpoint","thickness":20,"animation":null},{"x":500,"y":300,"type":"midpoint","thickness":20,"animation":null},{"x":500,"y":400,"type":"checkpoint","thickness":20,"animation":null,"filled":false},{"x":500,"y":500,"type":"midpoint","thickness":20,"animation":null},{"x":450,"y":600,"type":"midpoint","thickness":20,"animation":null,"filled":false},{"x":550,"y":600,"type":"midpoint","thickness":20,"animation":null},{"x":550,"y":500,"type":"midpoint","thickness":20,"animation":null},{"x":800,"y":400,"type":"checkpoint","thickness":20,"animation":null,"filled":false}],"fusespeed":200,"name":"#5: Hourglass (sort of)"},
+{"tuttext":["Don't worry, there's no fuse","","",""],"pts":[{"x":200,"y":400,"type":"checkpoint","thickness":10,"animation":null,"filled":false},{"x":500,"y":350,"type":"midpoint","thickness":20,"animation":null,"filled":true},{"x":500,"y":450,"type":"midpoint","thickness":20,"animation":null},{"x":800,"y":400,"type":"checkpoint","thickness":20,"animation":null,"filled":false}],"fusespeed":0,"name":"#6: Precision, Frustration, and Spaghetti"},
+			{"tuttext":["","","",""],"pts":[{"x":200,"y":400,"type":"checkpoint","thickness":30,"animation":null,"filled":false},{"x":350,"y":350,"type":"midpoint","thickness":20,"animation":null},{"x":350,"y":200,"type":"midpoint","thickness":20,"animation":null},{"x":500,"y":200,"type":"midpoint","thickness":20,"animation":null},{"x":500,"y":250,"type":"midpoint","thickness":20,"animation":null},{"x":400,"y":250,"type":"midpoint","thickness":20,"animation":null},{"x":400,"y":300,"type":"midpoint","thickness":20,"animation":null},{"x":550,"y":300,"type":"midpoint","thickness":20,"animation":null},{"x":550,"y":200,"type":"midpoint","thickness":20,"animation":null},{"x":600,"y":200,"type":"midpoint","thickness":20,"animation":null},{"x":600,"y":350,"type":"midpoint","thickness":20,"animation":null},{"x":400,"y":350,"type":"midpoint","thickness":20,"animation":null},{"x":400,"y":450,"type":"midpoint","thickness":20,"animation":null},{"x":450,"y":450,"type":"midpoint","thickness":20,"animation":null},{"x":450,"y":400,"type":"midpoint","thickness":20,"animation":null},{"x":600,"y":400,"type":"midpoint","thickness":20,"animation":null},{"x":600,"y":500,"type":"midpoint","thickness":20,"animation":null},{"x":550,"y":500,"type":"midpoint","thickness":20,"animation":null},{"x":550,"y":450,"type":"midpoint","thickness":20,"animation":null},{"x":500,"y":450,"type":"midpoint","thickness":20,"animation":null},{"x":500,"y":500,"type":"midpoint","thickness":20,"animation":null},{"x":400,"y":500,"type":"midpoint","thickness":20,"animation":null},{"x":400,"y":550,"type":"midpoint","thickness":20,"animation":null},{"x":500,"y":550,"type":"midpoint","thickness":20,"animation":null},{"x":650,"y":550,"type":"midpoint","thickness":20,"animation":null},{"x":650,"y":450,"type":"midpoint","thickness":20,"animation":null},{"x":800,"y":400,"type":"checkpoint","thickness":20,"animation":null,"filled":false}],"fusespeed":200,"name":"#7: This is Your Brain"},
+			{"tuttext":["","","",""],"pts":[{"x":200,"y":175,"type":"checkpoint","thickness":30,"animation":null,"filled":false},{"x":275,"y":200,"type":"midpoint","thickness":20,"animation":null},{"x":800,"y":200,"type":"midpoint","thickness":20,"animation":null},{"x":800,"y":600,"type":"midpoint","thickness":20,"animation":null},{"x":200,"y":600,"type":"midpoint","thickness":20,"animation":null},{"x":200,"y":250,"type":"midpoint","thickness":20,"animation":null},{"x":750,"y":250,"type":"midpoint","thickness":20,"animation":null},{"x":750,"y":550,"type":"midpoint","thickness":20,"animation":null},{"x":250,"y":550,"type":"midpoint","thickness":20,"animation":null},{"x":250,"y":300,"type":"midpoint","thickness":20,"animation":null},{"x":700,"y":300,"type":"midpoint","thickness":20,"animation":null},{"x":700,"y":500,"type":"midpoint","thickness":20,"animation":null},{"x":300,"y":500,"type":"midpoint","thickness":20,"animation":null},{"x":300,"y":350,"type":"midpoint","thickness":20,"animation":null},{"x":650,"y":350,"type":"midpoint","thickness":20,"animation":null},{"x":650,"y":450,"type":"midpoint","thickness":20,"animation":null},{"x":500,"y":450,"type":"midpoint","thickness":20,"animation":null},{"x":500,"y":425,"type":"checkpoint","thickness":20,"animation":null,"filled":false}],"fusespeed":200,"name":"#8: Are We There Yet?"},
+{"tuttext":["Watch out! Curves are a new addition that make levels just a little harder","","",""],"pts":[{"x":200,"y":450,"type":"checkpoint","thickness":30,"animation":null,"filled":true},{"x":200,"y":400,"type":"curve","thickness":20,"animation":null},{"x":200,"y":300,"type":"curve","thickness":20,"animation":null},{"x":350,"y":300,"type":"curve","thickness":20,"animation":null},{"x":350,"y":400,"type":"curve","thickness":20,"animation":null},{"x":350,"y":400,"type":"midpoint","thickness":20,"animation":null},{"x":350,"y":400,"type":"curve","thickness":20,"animation":null},{"x":350,"y":500,"type":"curve","thickness":20,"animation":null},{"x":500,"y":500,"type":"curve","thickness":20,"animation":null},{"x":500,"y":400,"type":"curve","thickness":20,"animation":null},{"x":500,"y":400,"type":"midpoint","thickness":20,"animation":null,"filled":false},{"x":500,"y":400,"type":"curve","thickness":20,"animation":null},{"x":500,"y":300,"type":"curve","thickness":20,"animation":null},{"x":650,"y":300,"type":"curve","thickness":20,"animation":null},{"x":650,"y":400,"type":"curve","thickness":20,"animation":null},{"x":650,"y":400,"type":"midpoint","thickness":20,"animation":null},{"x":650,"y":400,"type":"curve","thickness":20,"animation":null},{"x":650,"y":500,"type":"curve","thickness":20,"animation":null},{"x":800,"y":500,"type":"curve","thickness":20,"animation":null},{"x":800,"y":400,"type":"curve","thickness":20,"animation":null},{"x":800,"y":350,"type":"checkpoint","thickness":20,"animation":null,"filled":true}],"fusespeed":200,"name":"#9: No Step Off of Snek"},
+	{"tuttext":["","","",""],"pts":[{"x":487.5,"y":387.5,"type":"checkpoint","thickness":25,"animation":null,"filled":true},{"x":512.5,"y":387.5,"type":"curve","thickness":20,"animation":null},{"x":625,"y":425,"type":"curve","thickness":20,"animation":null},{"x":625,"y":225,"type":"curve","thickness":20,"animation":null},{"x":475,"y":225,"type":"curve","thickness":20,"animation":null},{"x":475,"y":225,"type":"midpoint","thickness":20,"animation":null},{"x":475,"y":225,"type":"curve","thickness":20,"animation":null},{"x":275,"y":225,"type":"curve","thickness":20,"animation":null},{"x":275,"y":475,"type":"curve","thickness":20,"animation":null},{"x":425,"y":525,"type":"curve","thickness":20,"animation":null},{"x":425,"y":525,"type":"checkpoint","thickness":20,"animation":null,"filled":true},{"x":425,"y":525,"type":"curve","thickness":20,"animation":null},{"x":575,"y":575,"type":"curve","thickness":20,"animation":null},{"x":675,"y":475,"type":"curve","thickness":20,"animation":null},{"x":675,"y":325,"type":"curve","thickness":20,"animation":null},{"x":675,"y":325,"type":"checkpoint","thickness":20,"animation":null,"filled":true}],"fusespeed":200,"name":"#10: Something Curly"},
+	{"tuttext":["","","",""],"pts":[{"x":200,"y":200,"type":"checkpoint","thickness":20,"animation":null,"filled":true},{"x":200,"y":500,"type":"curve","thickness":20,"animation":null},{"x":200,"y":600,"type":"curve","thickness":20,"animation":null},{"x":350,"y":600,"type":"curve","thickness":20,"animation":null},{"x":350,"y":500,"type":"curve","thickness":20,"animation":null},{"x":350,"y":450,"type":"checkpoint","thickness":20,"animation":null,"filled":true},{"x":350,"y":300,"type":"curve","thickness":20,"animation":null},{"x":350,"y":200,"type":"curve","thickness":20,"animation":null},{"x":500,"y":200,"type":"curve","thickness":20,"animation":null},{"x":500,"y":300,"type":"curve","thickness":20,"animation":null},{"x":500,"y":350,"type":"checkpoint","thickness":20,"animation":null,"filled":true},{"x":500,"y":500,"type":"curve","thickness":20,"animation":null},{"x":500,"y":600,"type":"curve","thickness":20,"animation":null},{"x":650,"y":600,"type":"curve","thickness":20,"animation":null},{"x":650,"y":500,"type":"curve","thickness":20,"animation":null},{"x":650,"y":450,"type":"checkpoint","thickness":20,"animation":null,"filled":true},{"x":650,"y":300,"type":"curve","thickness":20,"animation":null},{"x":650,"y":200,"type":"curve","thickness":20,"animation":null},{"x":800,"y":200,"type":"curve","thickness":20,"animation":null},{"x":800,"y":300,"type":"curve","thickness":20,"animation":null},{"x":800,"y":350,"type":"checkpoint","thickness":20,"animation":null,"filled":true},{"x":800,"y":600,"type":"checkpoint","thickness":20,"animation":null,"filled":true}],"fusespeed":200,"name":"#11: Cat & Mouse"},
+	{"tuttext":["","","",""],"pts":[{"x":200,"y":400,"type":"checkpoint","thickness":20,"animation":null,"filled":true},{"x":225,"y":400,"type":"curve","thickness":20,"animation":null},{"x":425,"y":450,"type":"curve","thickness":20,"animation":null},{"x":675,"y":200,"type":"curve","thickness":20,"animation":null},{"x":525,"y":400,"type":"curve","thickness":20,"animation":null},{"x":525,"y":400,"type":"midpoint","thickness":20,"animation":null},{"x":525,"y":400,"type":"curve","thickness":20,"animation":null},{"x":425,"y":550,"type":"curve","thickness":20,"animation":null},{"x":800,"y":400,"type":"curve","thickness":20,"animation":null},{"x":800,"y":400,"type":"checkpoint","thickness":20,"animation":null,"filled":true}],"fusespeed":300,"name":"#12: Totally Tubular"},
+	{"tuttext":["","","",""],"pts":[{"x":200,"y":400,"type":"checkpoint","thickness":20,"animation":null,"filled":false},{"x":400,"y":400,"type":"curve","thickness":20,"animation":null},{"x":500,"y":400,"type":"curve","thickness":20,"animation":null},{"x":500,"y":300,"type":"curve","thickness":20,"animation":null},{"x":600,"y":300,"type":"curve","thickness":20,"animation":null},{"x":600,"y":300,"type":"midpoint","thickness":20,"animation":null},{"x":650,"y":300,"type":"curve","thickness":20,"animation":null},{"x":750,"y":300,"type":"curve","thickness":20,"animation":null},{"x":750,"y":400,"type":"curve","thickness":20,"animation":null},{"x":750,"y":600,"type":"checkpoint","thickness":20,"animation":null,"filled":false}],"fusespeed":300,"name":"#13: Race to the Bottom"}
+		];
+		var frame = 0;
+		var canvas = document.getElementById('game');
+		var ctx = canvas.getContext('2d');
+		var mouseX = 0;
+		var mouseY = 0;
+		ctx.lineCap = 'round';
+		ctx.strokeStyle = 'DodgerBlue';
+		ctx.lineJoin = 'round';
+
+		var checkpoint = {
+			lvl: 0,
+			pt: 0,
+			fill: false
+		};
+		var state = {
+			ui: 'lvlselect',
+			stage: 0,
+			fuseoffset: 0,
+			lvleditdata: null,
+			editpt: 0,
+			oncheckpoint: false,
+			lvledittext: 'Level editor',
+			lvlformatchecked: -1,
+			lvlformatcorrect: true,
+			editstepsize: 50,
+			showstepsize: false,
+			editgrid: true
+		};
+
+		var animations = {
+			stage: {
+				r: 0,
+				g: 0,
+				b: 0,
+				a: 0
+			}
+		}
+		state.ui = 'gameplay';	// for debugging, comment out when there is a level select screen
+
+		function getLines(ctx, text, maxWidth) {
+			var words = text.split(" ");
+			var lines = [];
+			var currentLine = words[0];
+
+			for (var i = 1; i < words.length; i++) {
+				var word = words[i];
+				var width = ctx.measureText(currentLine + " " + word).width;
+				if (width < maxWidth) {
+					currentLine += " " + word;
+				} else {
+					lines.push(currentLine);
+					currentLine = word;
+				}
+			}
+			lines.push(currentLine);
+			return lines;
+		}
+
+		function drawWrappedText(txt, x, y, px, gap) {
+			var lines = getLines(ctx, txt, canvas.width - 200);
+			var absy = y;//(y - (lines.length * (px + gap))) + gap;
+			for (var i = 0; i < lines.length; i++) {
+				ctx.fillText(lines[i], x, absy + (i * (px + gap)));
+			}
+		}
+
+		function doAnimation(animation, realvalue, r, g, b, a) {
+			var cr;
+			var cg;
+			var cb;
+			var ca;
+			animation.r += (r - animation.r) / 10;
+			animation.g += (g - animation.g) / 10;
+			animation.b += (b - animation.b) / 10;
+			animation.a += (a - animation.a) / 10;
+			cr = animation.r;
+			cg = animation.g;
+			cb = animation.b;
+			ca = animation.a;
+			return "rgba(" + cr + ", " + cg + ", " + cb + ", " + (ca / 255) + ")";
+		}
+
+		function distance(a, b) {
+		  return Math.sqrt(Math.pow(a.x - b.x, 2) + Math.pow(a.y - b.y, 2));
+		}
+
+		function pixelstoward(a, b, px) {
+		  var dist = distance(a, b);
+		  var rise = (b.y - a.y) / dist;
+		  var run = (b.x - a.x) / dist;
+		  var newa = {};
+		  newa.x = a.x + (run * px);
+		  newa.y = a.y + (rise * px);
+		  return newa;
+		}
+
+		function calculatecubicbezier(curve, t) {
+		  var a = pixelstoward(curve[0], curve[1], distance(curve[0], curve[1]) * t);
+		  var b = pixelstoward(curve[1], curve[2], distance(curve[1], curve[2]) * t);
+		  return pixelstoward(a, b, distance(a, b) * t);
+		}
+
+		function calculatecurve(curve, t) {
+			if (curve.length == 3) {
+				return calculatecubicbezier(curve, t);
+			} else if (curve.length > 3) {
+				var refinedcurve = [];
+				for (i = 0; i < curve.length - 1; i++) {
+					var thispt = curve[i];
+					var nextpt = curve[i + 1];
+					refinedcurve.push(pixelstoward(thispt, nextpt, distance(thispt, nextpt) * t));
+				}
+				return calculatecurve(refinedcurve, t);
+			}
+		}
+
+		function addcubicbeziercurve(path, curve, res) {
+			for (var i = 0; i <= 1; i += res) {
+				path.push(calculatecubicbezier(curve, i));
+			}
+		}
+
+		function addcurve(path, curve, res) {
+			for (var i = 0; i <= 1; i += res) {
+				path.push(calculatecurve(curve, i));
+			}
+		}
+
+		function offsetpath(pathpoints, offset) {
+		  var newpathpoints = [];
+		  for (var i = 0; i < pathpoints.length; i++) {
+		    var pathpoint = pathpoints[i];
+				var current = newpathpoints[newpathpoints.length - 1];
+				if (!current) {
+					current = [];
+				}
+				if (pathpoint.type == "curve" && current.length > 0) {
+					current.push({x: pathpoint.x, y: pathpoint.y, type: pathpoint.type});
+				} else if (pathpoint.type == "curve") {
+					newpathpoints.push([{x: pathpoint.x, y: pathpoint.y, type: pathpoint.type}]);
+				} else if (current.length > 0) {
+					if (current.length >= 3) {
+						newpathpoints.splice(newpathpoints.length - 1, 1);
+						addcurve(newpathpoints, current, 0.01);
+						newpathpoints.push({x: pathpoint.x, y: pathpoint.y, type: pathpoint.type});
+					} else {
+						newpathpoints.splice(newpathpoints.length - 1, 1);
+						for (ii = 0; ii < current.length; ii++) {
+							newpathpoints.push(current[ii]);
+						}
+						newpathpoints.push({x: pathpoint.x, y: pathpoint.y, type: pathpoint.type});
+					}
+				} else {
+					newpathpoints.push({x: pathpoint.x, y: pathpoint.y, type: pathpoint.type});
+				}
+		  }
+		var current = newpathpoints[newpathpoints.length - 1];
+		if (current.length > 0) {
+			if (current.length >= 3) {
+				newpathpoints.splice(newpathpoints.length - 1, 1);
+				addcurve(newpathpoints, current, 0.01);
+				newpathpoints.push({x: pathpoint.x, y: pathpoint.y, type: pathpoint.type});
+			} else {
+				newpathpoints.splice(newpathpoints.length - 1, 1);
+				for (ii = 0; ii < current.length; ii++) {
+					newpathpoints.push(current[ii]);
+				}
+				newpathpoints.push({x: pathpoint.x, y: pathpoint.y, type: pathpoint.type});
+			}
+		}
+		//if (pathpoints[0].type == "checkpoint") {
+		//	newpathpoints[0].type = "checkpoint";
+		//}
+
+		  var offsetleft = offset;
+		  for (var i = 0; i < newpathpoints.length - 1; i++) {
+		    var pathpoint = newpathpoints[i];
+		    var nextpathpoint = newpathpoints[i + 1];
+		    var dist = distance(pathpoint, nextpathpoint);
+		    if (offsetleft >= dist) {
+		      pathpoint.throwaway = true;
+		      offsetleft -= dist;
+		    } else {
+		      var moved = pixelstoward(pathpoint, nextpathpoint, offsetleft);
+		      pathpoint.x = moved.x;
+		      pathpoint.y = moved.y;
+		      break;
+		    }
+		  }
+		  for (var i = 0; i < newpathpoints.length; i++) {
+		    var pathpoint = newpathpoints[i];
+		    if (pathpoint.throwaway) {
+		      newpathpoints.splice(i, 1);
+		      i = -1; continue;
+		    }
+		  }
+		  return newpathpoints;
+		}
+
+		function measurepath(path, uptopoint) {
+			if (uptopoint == 0) {
+				return 0;
+			}
+			measured = 0;
+			for (var i = 0; i < path.length - 1; i++) {
+				measured += distance(path[i], path[i + 1]);
+				if (i + 1 == uptopoint) {
+					break;
+				}
+			}
+			return measured;
+		}
+
+		function checklvlformat(lvl, repair) {
+			var formatcorrect = true;
+			if (typeof(lvl.tuttext) != "object") {
+				formatcorrect = false;
+				if (repair) {
+					lvl.tuttext = ["", "", "", ""];
+				}
+			}
+			if (lvl.tuttext.length != 4) {
+				formatcorrect = false;
+				if (lvl.tuttext.length > 4 && repair) {
+					lvl.tuttext.splice(4, lvl.tuttext.length - 4);
+				} else if (repair) {
+					var itemsneeded = 4 - lvl.tuttext.length;
+					for (var i = 0; i < itemsneeded; i++) {
+						itemsneeded.push("");
+					}
+				}
+			}
+			for (i = 0; i < 4; i++) {
+				if (typeof(lvl.tuttext[i]) != "string") {
+					formatcorrect = false;
+					if (repair) {
+						lvl.tuttext[i] = "";
+					}
+				}
+			}
+			if (typeof(lvl.pts) != "object" || lvl.length < 1) {
+				formatcorrect = false;
+				if (repair) {
+					lvl.pts = [
+						{
+							x: 200,
+							y: 400,
+							type: 'checkpoint',
+							thickness: 20
+						},
+					]
+				}
+			}
+			for (i = 0; i < lvl.pts.length; i++) {
+				var pt = lvl.pts[i];
+				if (typeof(pt.x) != "number" || !pt.y || typeof(pt.y) != "number") {
+					formatcorrect = false;
+					if (repair) {
+						lvl.pts.splice(i, 1);
+						i--;
+						continue;
+					}
+				}
+				if (pt.type != "checkpoint" && pt.type != "midpoint" && pt.type != "curve") {
+					formatcorrect = false;
+					if (repair) {
+						pt.type = "midpoint";
+					}
+				}
+				if (typeof(pt.thickness) != "number" || pt.thickness < 1) {
+					formatcorrect = false;
+					if (repair) {
+						pt.thickness = 20;
+					}
+				}
+			}
+			if (typeof(lvl.fusespeed) != "number" || lvl.fusespeed < 0) {
+				formatcorrect = false;
+				if (repair) {
+					lvl.fusespeed = 0;
+				}
+			}
+			if (!lvl.name || typeof(lvl.name) != "string") {
+				formatcorrect = false;
+				if (repair) {
+					lvl.name = "Untitled Level";
+				}
+			}
+			return formatcorrect;
+		}
+
+		function loop() {
+			requestAnimationFrame(loop);
+			var cursoronsomething = false;
+			if (++frame >= 60) {
+				frame = 0;
+			}
+			ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+			if (state.ui == 'gameplay') {
+				var lvl = lvldata[checkpoint.lvl];
+				if (state.lvleditdata && state.lvleditdata != null) {
+					lvl = state.lvleditdata;
+				}
+				if (state.lvlformatchecked != checkpoint.lvl) {
+					state.lvlformatcorrect = checklvlformat(lvl, false);
+					state.lvlformatchecked = checkpoint.lvl;
+				}
+				if (!state.lvlformatcorrect) {
+					ctx.textAlign = 'center';
+					ctx.font = '300 40px Roboto';
+					ctx.fillStyle = 'DodgerBlue';
+					drawWrappedText("Level format was incorrect. The level editor can automatically repair this.", canvas.width / 2, canvas.height / 2, 40, 10);
+					return;
+				}
+				var pts = lvl.pts;
+				var fusespeed = lvl.fusespeed;
+				ctx.strokeStyle = 'DodgerBlue';
+
+				// draw midpoints, catalog checkpoints
+				var beginoffset;
+				var checkpts = [];
+				for (var i = 0; i < pts.length; i++) {
+					var pt = pts[i];
+					if (pt.type == 'checkpoint') {
+						if (!pt.animation) {
+							pt.animation = {
+								r: 30,
+								g: 154,
+								b: 255,
+								a: 0,
+								radius: 0
+							}
+						}
+						checkpts.push(pt);
+					}
+				}
+				var curveless = offsetpath(pts, 0);
+				var c = 0;
+				//alert(JSON.stringify(curveless[0]));
+				for (var i = 0; i < curveless.length; i++) {
+					var pt = curveless[i];
+					if (pt.type == 'checkpoint') {
+						if (c == checkpoint.pt) {
+							beginoffset = measurepath(curveless, i);
+							break;
+						}
+						c++;
+					}
+				}
+				var primarycheckpt = checkpts[checkpoint.pt];
+				if (checkpoint.pt == checkpts.length - 1) {
+					beginoffset = 0;
+				}
+				var drawnpoints = offsetpath(pts, state.fuseoffset);
+				if (state.stage == 2 && drawnpoints.length > 1 && !(state.fuseoffset >= beginoffset && state.oncheckpoint)) {
+					state.fuseoffset += fusespeed / 60;
+				} else if (state.fuseoffset != beginoffset) {
+					state.fuseoffset -= (state.fuseoffset - beginoffset) / 10;
+				}
+				ctx.lineWidth = pts[0].thickness;
+				ctx.beginPath();
+				for (var i = 0; i < drawnpoints.length; i++) {
+					var pt = drawnpoints[i];
+					if (i > 0) {
+						ctx.lineTo(pt.x, pt.y);
+					} else {
+						ctx.moveTo(pt.x, pt.y);
+					}
+				}
+				if (ctx.isPointInStroke(mouseX, mouseY)) {
+					cursoronsomething = true;
+				}
+				ctx.stroke();
+				ctx.lineWidth = 10;
+				for (var i = 0; i < checkpts.length; i++) {
+					var checkpt = checkpts[i];
+					if (i != checkpoint.pt) {
+						ctx.fillStyle = '#FFFFFF';
+						ctx.strokeStyle = 'DodgerBlue';
+						ctx.beginPath();
+						ctx.arc(checkpt.x, checkpt.y, 40, 0, 2 * Math.PI);
+						if (ctx.isPointInPath(mouseX, mouseY)) {
+							cursoronsomething = true;
+							if (state.stage == 2) {
+								if (i == checkpts.length - 1) {
+									state.stage = 3;
+								}
+								checkpoint.pt = i;
+								i = -1; continue;
+							}
+						}
+						ctx.fill();
+						ctx.stroke();
+						if (i < checkpoint.pt) {
+							checkpt.filled = true;
+						} else {
+							checkpt.filled = false;
+						}
+						var a = 0;
+						if (checkpt.filled) {
+							a = 40;
+						}
+						checkpt.animation.radius += (a - checkpt.animation.radius) / 10
+						ctx.beginPath();
+						ctx.arc(checkpt.x, checkpt.y, checkpt.animation.radius, 0, 2 * Math.PI);
+						ctx.fillStyle = 'DodgerBlue';
+						ctx.fill();
+						if (checkpt.filled) {
+							ctx.beginPath();
+							ctx.lineWidth = 5;
+							ctx.strokeStyle = 'white';
+							ctx.lineCap = 'butt';
+							ctx.lineJoin = 'miter';
+							ctx.beginPath();
+							ctx.moveTo(checkpt.x - 17, checkpt.y);
+							ctx.lineTo(checkpt.x, checkpt.y + 15);
+							ctx.lineTo(checkpt.x + 17, checkpt.y - 15);
+							ctx.stroke();
+							ctx.lineCap = 'round';
+							ctx.lineJoin = 'round';
+							ctx.lineWidth = 10;
+							ctx.stroke();
+						}
+					}
+				}
+				var r = 0;
+				var g = 0;
+				var b = 0;
+				var a = 0;
+				if (state.stage == 0) {
+					a = 70;
+				} else if (state.stage == 4) {
+					r = 255;
+					a = 70;
+				}
+				ctx.fillStyle = doAnimation(animations.stage, state.stage, r, g, b, a);
+				ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+				for (var i = 0; i < checkpts.length; i++) {
+					var checkpt = checkpts[i];
+					if (i == checkpoint.pt) {
+						ctx.fillStyle = '#FFFFFF';
+						ctx.strokeStyle = 'DodgerBlue';
+						ctx.beginPath();
+						ctx.arc(checkpt.x, checkpt.y, 40, 0, 2 * Math.PI);
+						if (ctx.isPointInPath(mouseX, mouseY)) {
+							cursoronsomething = true;
+							state.oncheckpoint = true;
+						} else if (cursoronsomething && state.stage == 1) {
+							state.stage = 2;
+							//state.fuseoffset = 0;
+							state.oncheckpoint = false;
+						} else {
+							state.oncheckpoint = false;
+						}
+						if ((state.stage == 0 || state.stage == 4) && ctx.isPointInPath(mouseX, mouseY)) {
+							state.stage = 1;
+						}
+						ctx.fill();
+						ctx.stroke();
+						if (state.stage == 2 || state.stage == 3) {
+							checkpt.filled = true;
+						} else {
+							checkpt.filled = false;
+						}
+						var a = 0;
+						if (checkpt.filled) {
+							a = 40;
+						}
+						checkpt.animation.radius += (a - checkpt.animation.radius) / 10
+						ctx.beginPath();
+						ctx.arc(checkpt.x, checkpt.y, checkpt.animation.radius, 0, 2 * Math.PI);
+						ctx.fillStyle = 'DodgerBlue';
+						ctx.fill();
+						if (checkpt.filled) {
+							ctx.beginPath();
+							ctx.lineWidth = 5;
+							ctx.strokeStyle = 'white';
+							ctx.lineCap = 'butt';
+							ctx.lineJoin = 'miter';
+							ctx.beginPath();
+							ctx.moveTo(checkpt.x - 17, checkpt.y);
+							ctx.lineTo(checkpt.x, checkpt.y + 15);
+							ctx.lineTo(checkpt.x + 17, checkpt.y - 15);
+							ctx.stroke();
+							ctx.lineCap = 'round';
+							ctx.lineJoin = 'round';
+							ctx.lineWidth = 10;
+							ctx.stroke();
+						}
+					}
+				}
+				var tutmsg;
+				if (state.stage == 4) {
+					tutmsg = "Try again!";
+				} else {
+					tutmsg = lvl.tuttext[state.stage];
+				}
+				if (!cursoronsomething && state.stage >= 1 && state.stage != 3) {
+					state.stage = 4;
+				}
+
+				ctx.textAlign = 'center';
+				ctx.font = '300 40px Roboto';
+				ctx.fillStyle = 'DodgerBlue';
+				drawWrappedText(tutmsg, canvas.width / 2, canvas.height / 2 + 280, 40, 10);
+				drawWrappedText(lvl.name, canvas.width / 2, canvas.height / 2 - 250, 40, 10);
+				//ctx.fillText(tutmsg, canvas.width / 2, canvas.height / 2 + 250);
+			} else if (state.ui === 'lvledit') {
+				lvl = state.lvleditdata;
+				if (state.lvlformatchecked != checkpoint.lvl) {
+					state.lvlformatcorrect = checklvlformat(lvl, true);
+					if (!state.lvlformatcorrect) {
+						state.lvledittext = "Format was incorrect, editor automatically repaired it";
+						window.setTimeout(function() {state.lvledittext = "Level editor"}, 2000);
+						state.lvlformatcorrect = true;
+					}
+					state.lvlformatchecked = checkpoint.lvl;
+				} else if (!state.lvlformatcorrect) {
+					state.lvlformatcorrect = checklvlformat(lvl, true);
+					state.lvlformatcorrect = true;
+					state.lvlformatchecked = checkpoint.lvl;
+					state.lvledittext = "Format was incorrect, editor automatically repaired it";
+					window.setTimeout(function() {state.lvledittext = "Level editor"}, 2000);
+				}
+
+				if (state.editgrid) {
+					ctx.lineWidth = 1;
+					ctx.strokeStyle = '#DDDDDD';
+					for (x = 200 + state.editstepsize; x < 800; x += state.editstepsize) {
+						ctx.beginPath();
+						ctx.moveTo(x, 200);
+						ctx.lineTo(x, 600);
+						ctx.stroke();
+					}
+					for (y = 200 + state.editstepsize; y < 600; y += state.editstepsize) {
+						ctx.beginPath();
+						ctx.moveTo(200, y);
+						ctx.lineTo(800, y);
+						ctx.stroke();
+					}
+				}
+
+				var pts = lvl.pts;
+				var fusespeed = lvl.fusespeed;
+				ctx.strokeStyle = 'DodgerBlue';
+				var checkpts = [];
+				var curvepts = [];
+				for (var i = 0; i < pts.length; i++) {
+					var pt = pts[i];
+					if (pt.type == 'checkpoint') {
+						checkpts.push(pt);
+					} else if (pt.type == 'curve') {
+						curvepts.push(pt);
+					}
+				}
+				var primarycheckpt = checkpts[checkpoint.pt];
+				var drawnpoints = offsetpath(pts, 0);
+				ctx.lineWidth = pts[0].thickness;
+				ctx.beginPath();
+				for (var i = 0; i < drawnpoints.length; i++) {
+					var pt = drawnpoints[i];
+					if (i > 0) {
+						ctx.lineTo(pt.x, pt.y);
+					} else {
+						ctx.moveTo(pt.x, pt.y);
+					}
+				}
+				ctx.stroke();
+				ctx.lineWidth = 10;
+				for (var i = 0; i < checkpts.length; i++) {
+					checkpt = checkpts[i];
+					ctx.fillStyle = '#FFFFFF';
+					ctx.strokeStyle = 'DodgerBlue';
+					ctx.beginPath();
+					ctx.arc(checkpt.x, checkpt.y, 40, 0, 2 * Math.PI);
+					ctx.fill();
+					ctx.stroke();
+				}
+				var selectedpt = pts[state.editpt];
+				if (curvepts.length > 1 && selectedpt.type == "curve") {
+					var currentcurvebeginpt;
+					for (var i = state.editpt; pts[i].type == "curve"; i--) {
+						currentcurvebeginpt = i;
+					}
+					ctx.strokeStyle = '#00000088';
+					ctx.lineWidth = 5;
+					ctx.beginPath();
+					ctx.moveTo(pts[currentcurvebeginpt].x, pts[currentcurvebeginpt].y);
+					for (i = currentcurvebeginpt + 1; pts[i] && pts[i].type == "curve"; i++) {
+						var curvept = pts[i];
+						ctx.lineTo(curvept.x, curvept.y);
+					}
+					ctx.stroke();
+				}
+				ctx.fillStyle = 'black';
+				if (selectedpt.type == "curve") {
+					ctx.fillStyle = 'green';
+				}
+				ctx.beginPath();
+				ctx.arc(selectedpt.x, selectedpt.y, 20, 0, 2 * Math.PI);
+				ctx.fill();
+				if (selectedpt.x == 200 || selectedpt.x == 500) {
+					ctx.beginPath();
+					ctx.arc(selectedpt.x - 20, selectedpt.y, 10, 0, 2 * Math.PI);
+					ctx.fill();
+				}
+				if (selectedpt.x == 800 || selectedpt.x == 500) {
+					ctx.beginPath();
+					ctx.arc(selectedpt.x + 20, selectedpt.y, 10, 0, 2 * Math.PI);
+					ctx.fill();
+				}
+				if (selectedpt.y == 200 || selectedpt.y == 400) {
+					ctx.beginPath();
+					ctx.arc(selectedpt.x, selectedpt.y - 20, 10, 0, 2 * Math.PI);
+					ctx.fill();
+				}
+				if (selectedpt.y == 600 || selectedpt.y == 400) {
+					ctx.beginPath();
+					ctx.arc(selectedpt.x, selectedpt.y + 20, 10, 0, 2 * Math.PI);
+					ctx.fill();
+				}
+				if (state.showstepsize) {
+					if (state.editstepsize == 50) {
+						ctx.fillStyle = '#00000088';
+					} else if (state.editstepsize < 25) {
+						ctx.fillStyle = '#FFFFFF55';
+					} else {
+						ctx.fillStyle = '#00000055';
+					}
+					ctx.beginPath();
+					ctx.arc(selectedpt.x + state.editstepsize, selectedpt.y, 10, 0, 2 * Math.PI);
+					ctx.fill();
+					ctx.beginPath();
+					ctx.arc(selectedpt.x - state.editstepsize, selectedpt.y, 10, 0, 2 * Math.PI);
+					ctx.fill();
+					ctx.beginPath();
+					ctx.arc(selectedpt.x, selectedpt.y + state.editstepsize, 10, 0, 2 * Math.PI);
+					ctx.fill();
+					ctx.beginPath();
+					ctx.arc(selectedpt.x, selectedpt.y - state.editstepsize, 10, 0, 2 * Math.PI);
+					ctx.fill();
+				}
+
+				ctx.textAlign = 'center';
+				ctx.font = '300 40px Roboto';
+				ctx.fillStyle = 'DodgerBlue';
+				drawWrappedText(state.lvledittext, canvas.width / 2, canvas.height / 2 + 280, 40, 10);
+				drawWrappedText(lvl.name, canvas.width / 2, canvas.height / 2 - 250, 40, 10);
+			}
+		}
+
+		canvas.addEventListener('mousemove', function(e) {
+			var rect = canvas.getBoundingClientRect();
+			mouseX = e.clientX - rect.left;
+			mouseY = e.clientY - rect.top;
+			//alert(mouseX);
+		});
+		document.addEventListener('keydown', function(e) {
+			if (e.which === 32 && state.stage == 3) {
+				//alert('space');
+				if (state.lvleditdata) {
+					checkpoint.pt = 0;
+					state.stage = 0;
+					return;
+				}
+				checkpoint.pt = 0;
+				checkpoint.lvl++;
+				state.stage = 0;
+				if (checkpoint.lvl > lvldata.length - 1) {
+					checkpoint.lvl = 0;
+				}
+			} else if (e.which === 76) {
+				var lvl = prompt('Jump to Level');
+				if (lvl == null) {
+					return;
+				}
+				lvl--;
+				checkpoint.lvl = lvl;
+				checkpoint.pt = 0;
+				state.ui = 'gameplay';
+				state.lvleditdata = null;
+				state.stage = 0;
+			} else if (e.which === 69) {
+				var lvl = prompt('Edit Level');
+				if (lvl == null) {
+					return;
+				}
+				lvl--;
+				if (lvl == -1) {
+					state.ui = 'lvledit';
+					state.lvleditdata = {
+						tuttext: ['', '', '', ''],
+						pts: [
+							{
+								x: 200,
+								y: 400,
+								type: 'checkpoint',
+								thickness: 20
+							},
+						],
+						fusespeed: 0,
+						name: 'Untitled Level'
+					};
+					checkpoint.lvl = 0;
+				} else {
+					state.lvleditdata = lvldata[lvl];
+					checkpoint.lvl = lvl;
+					state.ui = 'lvledit';
+				}
+			} else if (e.which === 80 && state.lvleditdata) {
+				if (state.ui == 'gameplay') {
+					state.ui = 'lvledit';
+				} else {
+					state.ui = 'gameplay';
+					state.stage = 0;
+					checkpoint.pt = 0;
+				}
+			}
+			if (state.ui == 'lvledit') {
+				var pts = state.lvleditdata.pts;
+				var tuttext = state.lvleditdata.tuttext;
+				var selectedpt = pts[state.editpt];
+				if (e.which === 37) {
+					state.editpt--;
+				} else if (e.which === 39) {
+					state.editpt++;
+				} else if (e.which === 87) {
+					selectedpt.y -= state.editstepsize;
+				} else if (e.which === 83) {
+					selectedpt.y += state.editstepsize;
+				} else if (e.which === 65) {
+					selectedpt.x -= state.editstepsize;
+				} else if (e.which === 68) {
+					selectedpt.x += state.editstepsize;
+				} else if (e.which === 187) {
+					pts.splice(state.editpt + 1, 0, {
+						x: selectedpt.x,
+						y: selectedpt.y,
+						type: 'midpoint',
+						thickness: 20
+					});
+					state.editpt++;
+				} else if (e.which === 189) {
+					if (pts.length > 1) {
+						pts.splice(state.editpt, 1);
+					}
+					state.editpt--;
+				} else if (e.which === 67) {
+					selectedpt.type = 'checkpoint';
+				} else if (e.which === 77) {
+					selectedpt.type = 'midpoint';
+				} else if (e.which === 84) {
+					var p = Number(prompt('thickness'));
+					if (p == null || p < 1) {
+						return;
+					}
+					pts[0].thickness = p;
+				} else if (e.which === 48) {
+					var p = prompt('stage 0 tuttext');
+					if (p == null) {
+						return;
+					}
+					tuttext[0] = p;
+				} else if (e.which === 49) {
+					var p = prompt('stage 1 tuttext');
+					if (p == null) {
+						return;
+					}
+					tuttext[1] = p;
+				} else if (e.which === 50) {
+					var p = prompt('stage 2 tuttext');
+					if (p == null) {
+						return;
+					}
+					tuttext[2] = p;
+				} else if (e.which === 51) {
+					var p = prompt('stage 3 tuttext');
+					if (p == null) {
+						return;
+					}
+					tuttext[3] = p;
+				} else if (e.which === 70) {
+					var p = Number(prompt('fuse speed'));
+					if (p == null || p < 0) {
+						return;
+					}
+					state.lvleditdata.fusespeed = p;
+				} else if (e.which === 74) {
+					for (var i = 0; i < pts.length; i++) {
+						pts[i].animation = null;
+					}
+					navigator.clipboard.writeText(JSON.stringify(state.lvleditdata));
+					state.lvledittext = 'JSON saved, copied to clipboard'
+					window.setTimeout(function() {state.lvledittext = 'Level editor'}, 2000);
+				} else if (e.which === 79) {
+					var json = prompt('Level data');
+					if (json == null) {
+						return;
+					}
+					var loadedlvl;
+					try {
+						loadedlvl = JSON.parse(json);
+					} catch {
+						alert('Failed to parse level JSON');
+						return;
+					}
+					state.lvleditdata = loadedlvl;
+					state.lvledittext = 'JSON loaded';
+					state.lvlformatchecked = -1;
+					window.setTimeout(function() {state.lvledittext = 'Level editor'}, 2000);
+				} else if (e.which === 78) {
+					var name = prompt('Name');
+					if (name == null || !name) {
+						return;
+					}
+					state.lvleditdata.name = name;
+				} else if (e.which === 190) {
+					if (state.showstepsize) {
+						state.editstepsize *= 2;
+					} else {
+						state.showstepsize = true;
+					}
+					return;
+				} else if (e.which === 188) {
+					if (state.showstepsize) {
+						state.editstepsize /= 2;
+					} else {
+						state.showstepsize = true;
+					}
+					return;
+				} else if (e.which === 71) {
+					state.editgrid = !state.editgrid;
+				} else if (e.which === 81) {
+					selectedpt.type = 'curve';
+				}
+				if (state.editpt < 0) {
+					state.editpt = pts.length - 1;
+				}
+				if (state.editpt >= pts.length) {
+					state.editpt = 0;
+				}
+				state.showstepsize = false;
+			}
+		});
+		requestAnimationFrame(loop);
+		</script>
+	</body>
+</html>
