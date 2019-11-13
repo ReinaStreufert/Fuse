@@ -920,6 +920,11 @@
 					state.gameplay.stage = 0;
 					return;
 				}
+				if (checkpoint.lvl == lvldata.length - 1) {
+					state.ui = 'lvlselect';
+					state.lvledit.lvleditdata = null;
+					state.gameplay.stage = 0;
+				}
 				checkpoint.pt = 0;
 				checkpoint.lvl++;
 				state.gameplay.stage = 0;
