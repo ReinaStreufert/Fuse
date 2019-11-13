@@ -1,6 +1,5 @@
-<html>
-	<head>
-		<link href="https://fonts.googleapis.com/css?family=Roboto:300,400&display=swap" rel="stylesheet">
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+		<link href="https://fonts.googleapis.com/css?family=Roboto:100,300,400&display=swap" rel="stylesheet">
 		<style>
 		html, body {
 			height: 100%;
@@ -132,18 +131,48 @@
 		};
 		var state = {
 			ui: 'lvlselect',
-			stage: 0,
-			fuseoffset: 0,
-			lvleditdata: null,
-			editpt: 0,
-			oncheckpoint: false,
-			lvledittext: 'Level editor',
-			lvlformatchecked: -1,
-			lvlformatcorrect: true,
-			editstepsize: 50,
-			showstepsize: false,
-			editgrid: true
+			gameplay: {
+				stage: 0,
+				fuseoffset: 0,
+				oncheckpoint: false
+			},
+			lvledit: {
+				lvleditdata: null,
+				editpt: 0,
+				lvledittext: 'Level editor',
+				editstepsize: 50,
+				showstepsize: false,
+				editgrid: true
+			},
+			common: {
+				lvlformatchecked: -1,
+				lvlformatcorrect: true
+			},
+			lvlselect: {
+				selectedlvl: 0,
+				gamemode: 0,
+				ongamemode: false,
+				gamemodes: [
+					'Normal',
+					'Ghost Race',
+					'Edit',
+					'Edit new'
+				]
+			}
 		};
+		var constantstate = {
+			latestunlocked: {
+				lvl: 0,
+				pt: 0
+			}
+		}
+		try {
+			constantstate = JSON.parse(document.cookie)
+		} catch {}
+
+		function saveconstantstate() {
+			document.cookie = constantstate.stringify;
+		}
 
 		var animations = {
 			stage: {
@@ -153,7 +182,7 @@
 				a: 0
 			}
 		}
-		state.ui = 'gameplay';	// for debugging, comment out when there is a level select screen
+		//state.ui = 'gameplay';	// for debugging, comment out when there is a level select screen
 
 		function getLines(ctx, text, maxWidth) {
 			var words = text.split(" ");
@@ -407,6 +436,10 @@
 			return formatcorrect;
 		}
 
+		function rgba(r, g, b, a) {
+			return "rgba(" + r + ", " + b + ", " + g + ", " + a / 255 + ")";
+		}
+
 		function loop() {
 			requestAnimationFrame(loop);
 			var cursoronsomething = false;
@@ -417,16 +450,16 @@
 
 			if (state.ui == 'gameplay') {
 				var lvl = lvldata[checkpoint.lvl];
-				if (state.lvleditdata && state.lvleditdata != null) {
-					lvl = state.lvleditdata;
+				if (state.lvledit.lvleditdata && state.lvledit.lvleditdata != null) {
+					lvl = state.lvledit.lvleditdata;
 				}
-				if (state.lvlformatchecked != checkpoint.lvl) {
-					state.lvlformatcorrect = checklvlformat(lvl, false);
-					state.lvlformatchecked = checkpoint.lvl;
+				if (state.common.lvlformatchecked != checkpoint.lvl) {
+					state.common.lvlformatcorrect = checklvlformat(lvl, false);
+					state.common.lvlformatchecked = checkpoint.lvl;
 				}
-				if (!state.lvlformatcorrect) {
+				if (!state.common.lvlformatcorrect) {
 					ctx.textAlign = 'center';
-					ctx.font = '300 40px Roboto';
+					ctx.font = '100 40px Roboto';
 					ctx.fillStyle = 'DodgerBlue';
 					drawWrappedText("Level format was incorrect. The level editor can automatically repair this.", canvas.width / 2, canvas.height / 2, 40, 10);
 					return;
@@ -470,11 +503,11 @@
 				if (checkpoint.pt == checkpts.length - 1) {
 					beginoffset = 0;
 				}
-				var drawnpoints = offsetpath(pts, state.fuseoffset);
-				if (state.stage == 2 && drawnpoints.length > 1 && !(state.fuseoffset >= beginoffset && state.oncheckpoint)) {
-					state.fuseoffset += fusespeed / 60;
-				} else if (state.fuseoffset != beginoffset) {
-					state.fuseoffset -= (state.fuseoffset - beginoffset) / 10;
+				var drawnpoints = offsetpath(pts, state.gameplay.fuseoffset);
+				if (state.gameplay.stage == 2 && drawnpoints.length > 1 && !(state.gameplay.fuseoffset >= beginoffset && state.gameplay.oncheckpoint)) {
+					state.gameplay.fuseoffset += fusespeed / 60;
+				} else if (state.gameplay.fuseoffset != beginoffset) {
+					state.gameplay.fuseoffset -= (state.gameplay.fuseoffset - beginoffset) / 10;
 				}
 				ctx.lineWidth = pts[0].thickness;
 				ctx.beginPath();
@@ -500,11 +533,20 @@
 						ctx.arc(checkpt.x, checkpt.y, 40, 0, 2 * Math.PI);
 						if (ctx.isPointInPath(mouseX, mouseY)) {
 							cursoronsomething = true;
-							if (state.stage == 2) {
+							if (state.gameplay.stage == 2) {
 								if (i == checkpts.length - 1) {
-									state.stage = 3;
+									state.gameplay.stage = 3;
+									if (checkpoint.lvl + 1 > constantstate.latestunlocked.lvl && !state.lvledit.lvleditdata) {
+										constantstate.latestunlocked.lvl = checkpoint.lvl + 1;
+										constantstate.latestunlocked.pt = 0;
+										saveconstantstate();
+									}
 								}
 								checkpoint.pt = i;
+								if (constantstate.latestunlocked.lvl == checkpoint.lvl && checkpoint.pt > constantstate.latestunlocked.pt && !state.lvledit.lvleditdata) {
+									constantstate.latestunlocked.pt = checkpoint.pt
+									saveconstantstate();
+								}
 								i = -1; continue;
 							}
 						}
@@ -546,13 +588,13 @@
 				var g = 0;
 				var b = 0;
 				var a = 0;
-				if (state.stage == 0) {
+				if (state.gameplay.stage == 0) {
 					a = 70;
-				} else if (state.stage == 4) {
+				} else if (state.gameplay.stage == 4) {
 					r = 255;
 					a = 70;
 				}
-				ctx.fillStyle = doAnimation(animations.stage, state.stage, r, g, b, a);
+				ctx.fillStyle = doAnimation(animations.stage, state.gameplay.stage, r, g, b, a);
 				ctx.fillRect(0, 0, canvas.width, canvas.height);
 
 				for (var i = 0; i < checkpts.length; i++) {
@@ -564,20 +606,20 @@
 						ctx.arc(checkpt.x, checkpt.y, 40, 0, 2 * Math.PI);
 						if (ctx.isPointInPath(mouseX, mouseY)) {
 							cursoronsomething = true;
-							state.oncheckpoint = true;
-						} else if (cursoronsomething && state.stage == 1) {
-							state.stage = 2;
-							//state.fuseoffset = 0;
-							state.oncheckpoint = false;
+							state.gameplay.oncheckpoint = true;
+						} else if (cursoronsomething && state.gameplay.stage == 1) {
+							state.gameplay.stage = 2;
+							//state.gameplay.fuseoffset = 0;
+							state.gameplay.oncheckpoint = false;
 						} else {
-							state.oncheckpoint = false;
+							state.gameplay.oncheckpoint = false;
 						}
-						if ((state.stage == 0 || state.stage == 4) && ctx.isPointInPath(mouseX, mouseY)) {
-							state.stage = 1;
+						if ((state.gameplay.stage == 0 || state.gameplay.stage == 4) && ctx.isPointInPath(mouseX, mouseY)) {
+							state.gameplay.stage = 1;
 						}
 						ctx.fill();
 						ctx.stroke();
-						if (state.stage == 2 || state.stage == 3) {
+						if (state.gameplay.stage == 2 || state.gameplay.stage == 3) {
 							checkpt.filled = true;
 						} else {
 							checkpt.filled = false;
@@ -610,49 +652,49 @@
 					}
 				}
 				var tutmsg;
-				if (state.stage == 4) {
+				if (state.gameplay.stage == 4) {
 					tutmsg = "Try again!";
 				} else {
-					tutmsg = lvl.tuttext[state.stage];
+					tutmsg = lvl.tuttext[state.gameplay.stage];
 				}
-				if (!cursoronsomething && state.stage >= 1 && state.stage != 3) {
-					state.stage = 4;
+				if (!cursoronsomething && state.gameplay.stage >= 1 && state.gameplay.stage != 3) {
+					state.gameplay.stage = 4;
 				}
 
 				ctx.textAlign = 'center';
-				ctx.font = '300 40px Roboto';
+				ctx.font = '100 40px Roboto';
 				ctx.fillStyle = 'DodgerBlue';
 				drawWrappedText(tutmsg, canvas.width / 2, canvas.height / 2 + 280, 40, 10);
 				drawWrappedText(lvl.name, canvas.width / 2, canvas.height / 2 - 250, 40, 10);
 				//ctx.fillText(tutmsg, canvas.width / 2, canvas.height / 2 + 250);
 			} else if (state.ui === 'lvledit') {
-				lvl = state.lvleditdata;
-				if (state.lvlformatchecked != checkpoint.lvl) {
-					state.lvlformatcorrect = checklvlformat(lvl, true);
-					if (!state.lvlformatcorrect) {
-						state.lvledittext = "Format was incorrect, editor automatically repaired it";
-						window.setTimeout(function() {state.lvledittext = "Level editor"}, 2000);
-						state.lvlformatcorrect = true;
+				lvl = state.lvledit.lvleditdata;
+				if (state.common.lvlformatchecked != checkpoint.lvl) {
+					state.common.lvlformatcorrect = checklvlformat(lvl, true);
+					if (!state.common.lvlformatcorrect) {
+						state.lvledit.lvledittext = "Format was incorrect, editor automatically repaired it";
+						window.setTimeout(function() {state.lvledit.lvledittext = "Level editor"}, 2000);
+						state.common.lvlformatcorrect = true;
 					}
-					state.lvlformatchecked = checkpoint.lvl;
-				} else if (!state.lvlformatcorrect) {
-					state.lvlformatcorrect = checklvlformat(lvl, true);
-					state.lvlformatcorrect = true;
-					state.lvlformatchecked = checkpoint.lvl;
-					state.lvledittext = "Format was incorrect, editor automatically repaired it";
-					window.setTimeout(function() {state.lvledittext = "Level editor"}, 2000);
+					state.common.lvlformatchecked = checkpoint.lvl;
+				} else if (!state.common.lvlformatcorrect) {
+					state.common.lvlformatcorrect = checklvlformat(lvl, true);
+					state.common.lvlformatcorrect = true;
+					state.common.lvlformatchecked = checkpoint.lvl;
+					state.lvledit.lvledittext = "Format was incorrect, editor automatically repaired it";
+					window.setTimeout(function() {state.lvledit.lvledittext = "Level editor"}, 2000);
 				}
 
-				if (state.editgrid) {
+				if (state.lvledit.editgrid) {
 					ctx.lineWidth = 1;
 					ctx.strokeStyle = '#DDDDDD';
-					for (x = 200 + state.editstepsize; x < 800; x += state.editstepsize) {
+					for (x = 200 + state.lvledit.editstepsize; x < 800; x += state.lvledit.editstepsize) {
 						ctx.beginPath();
 						ctx.moveTo(x, 200);
 						ctx.lineTo(x, 600);
 						ctx.stroke();
 					}
-					for (y = 200 + state.editstepsize; y < 600; y += state.editstepsize) {
+					for (y = 200 + state.lvledit.editstepsize; y < 600; y += state.lvledit.editstepsize) {
 						ctx.beginPath();
 						ctx.moveTo(200, y);
 						ctx.lineTo(800, y);
@@ -696,10 +738,10 @@
 					ctx.fill();
 					ctx.stroke();
 				}
-				var selectedpt = pts[state.editpt];
+				var selectedpt = pts[state.lvledit.editpt];
 				if (curvepts.length > 1 && selectedpt.type == "curve") {
 					var currentcurvebeginpt;
-					for (var i = state.editpt; pts[i].type == "curve"; i--) {
+					for (var i = state.lvledit.editpt; pts[i].type == "curve"; i--) {
 						currentcurvebeginpt = i;
 					}
 					ctx.strokeStyle = '#00000088';
@@ -739,33 +781,118 @@
 					ctx.arc(selectedpt.x, selectedpt.y + 20, 10, 0, 2 * Math.PI);
 					ctx.fill();
 				}
-				if (state.showstepsize) {
-					if (state.editstepsize == 50) {
+				if (state.lvledit.showstepsize) {
+					if (state.lvledit.editstepsize == 50) {
 						ctx.fillStyle = '#00000088';
-					} else if (state.editstepsize < 25) {
+					} else if (state.lvledit.editstepsize < 25) {
 						ctx.fillStyle = '#FFFFFF55';
 					} else {
 						ctx.fillStyle = '#00000055';
 					}
 					ctx.beginPath();
-					ctx.arc(selectedpt.x + state.editstepsize, selectedpt.y, 10, 0, 2 * Math.PI);
+					ctx.arc(selectedpt.x + state.lvledit.editstepsize, selectedpt.y, 10, 0, 2 * Math.PI);
 					ctx.fill();
 					ctx.beginPath();
-					ctx.arc(selectedpt.x - state.editstepsize, selectedpt.y, 10, 0, 2 * Math.PI);
+					ctx.arc(selectedpt.x - state.lvledit.editstepsize, selectedpt.y, 10, 0, 2 * Math.PI);
 					ctx.fill();
 					ctx.beginPath();
-					ctx.arc(selectedpt.x, selectedpt.y + state.editstepsize, 10, 0, 2 * Math.PI);
+					ctx.arc(selectedpt.x, selectedpt.y + state.lvledit.editstepsize, 10, 0, 2 * Math.PI);
 					ctx.fill();
 					ctx.beginPath();
-					ctx.arc(selectedpt.x, selectedpt.y - state.editstepsize, 10, 0, 2 * Math.PI);
+					ctx.arc(selectedpt.x, selectedpt.y - state.lvledit.editstepsize, 10, 0, 2 * Math.PI);
 					ctx.fill();
 				}
 
 				ctx.textAlign = 'center';
-				ctx.font = '300 40px Roboto';
+				ctx.font = '100 40px Roboto';
 				ctx.fillStyle = 'DodgerBlue';
-				drawWrappedText(state.lvledittext, canvas.width / 2, canvas.height / 2 + 280, 40, 10);
+				drawWrappedText(state.lvledit.lvledittext, canvas.width / 2, canvas.height / 2 + 280, 40, 10);
 				drawWrappedText(lvl.name, canvas.width / 2, canvas.height / 2 - 250, 40, 10);
+			} else if (state.ui == "lvlselect") {
+				var selectedlvl = lvldata[state.lvlselect.selectedlvl];
+				ctx.font = '100 40px Roboto';
+				ctx.fillStyle = 'black';
+				var titleY = canvas.height / 2 - ((state.lvlselect.selectedlvl + 1) * 50);
+				if (titleY < 50) {
+					titleY = 50;
+				}
+				var levelsX = 25;
+				ctx.textAlign = 'left';
+				ctx.fillText('Level Select', levelsX, titleY);
+				ctx.textAlign = 'left';
+				ctx.fillStyle = 'DodgerBlue';
+				if (state.lvlselect.selectedlvl > constantstate.latestunlocked.lvl) {
+					ctx.fillStyle = 'Crimson';
+				}
+				ctx.fillText(selectedlvl.name, levelsX, canvas.height / 2);
+				ctx.lineWidth = 2.5;
+				ctx.lineCap = 'butt';
+				if (state.lvlselect.selectedlvl > constantstate.latestunlocked.lvl) {
+					ctx.strokeStyle = 'Gray';
+					ctx.beginPath();
+					ctx.moveTo(levelsX - 10, canvas.height / 2 - 40);
+					ctx.lineTo(levelsX - 10, canvas.height / 2 + 10);
+				}
+				if (state.lvlselect.selectedlvl < constantstate.latestunlocked.lvl) {
+					ctx.strokeStyle = '#00AA55';
+					ctx.beginPath();
+					ctx.moveTo(levelsX - 10, canvas.height / 2 - 40);
+					ctx.lineTo(levelsX - 10, canvas.height / 2 + 10);
+				}
+				if (state.lvlselect.selectedlvl == constantstate.latestunlocked.lvl) {
+					ctx.strokeStyle = 'DodgerBlue';
+					ctx.beginPath();
+					ctx.moveTo(levelsX - 10, canvas.height / 2 - 40);
+					ctx.lineTo(levelsX - 10, canvas.height / 2 + 10);
+				}
+				if (!state.lvlselect.ongamemode) {
+					ctx.stroke();
+				}
+				//ctx.fillStyle = 'Gray';
+				for (var i = state.lvlselect.selectedlvl - 1; i >= 0; i--) {
+					var difference = i - state.lvlselect.selectedlvl;
+					if (state.lvlselect.ongamemode) {
+						ctx.fillStyle = rgba(100, 100, 100, 130 - Math.abs(difference) * 30);
+					} else {
+						ctx.fillStyle = rgba(100, 100, 100, 255 - Math.abs(difference) * 30);
+					}
+					var y = canvas.height / 2 + difference * 50
+					ctx.fillText(lvldata[i].name, levelsX, y);
+				}
+				for (var i = state.lvlselect.selectedlvl + 1; i < lvldata.length; i++) {
+					var difference = i - state.lvlselect.selectedlvl;
+					var y = canvas.height / 2 + difference * 50
+					if (state.lvlselect.ongamemode) {
+						ctx.fillStyle = rgba(100, 100, 100, 130 - Math.abs(difference) * 30);
+					} else {
+						ctx.fillStyle = rgba(100, 100, 100, 255 - Math.abs(difference) * 30);
+					}
+					ctx.fillText(lvldata[i].name, levelsX, y);
+				}
+				ctx.fillStyle = 'black';
+				var gamemodesX = canvas.width / 2 + 230
+				ctx.fillText('Game Mode', gamemodesX, canvas.height / 2 - 50);
+				var gamemodes = state.lvlselect.gamemodes;
+				for (var i = 0; i < gamemodes.length; i++) {
+					var y = canvas.height / 2 + i * 50;
+					if (i == state.lvlselect.gamemode) {
+						ctx.fillStyle = 'DodgerBlue'
+						ctx.strokeStyle = 'DodgerBlue';
+						if (state.lvlselect.ongamemode) {
+							ctx.beginPath();
+							ctx.moveTo(gamemodesX - 10, y - 40);
+							ctx.lineTo(gamemodesX - 10, y + 10);
+							ctx.stroke();
+						}
+					} else {
+						if (state.lvlselect.ongamemode) {
+							ctx.fillStyle = rgba(100, 100, 100, 255);
+						} else {
+							ctx.fillStyle = rgba(100, 100, 100, 100);
+						}
+					}
+					ctx.fillText(gamemodes[i], gamemodesX, y);
+				}
 			}
 		}
 
@@ -776,30 +903,23 @@
 			//alert(mouseX);
 		});
 		document.addEventListener('keydown', function(e) {
-			if (e.which === 32 && state.stage == 3) {
+			if (e.which === 32 && state.gameplay.stage == 3) {
 				//alert('space');
-				if (state.lvleditdata) {
+				if (state.lvledit.lvleditdata) {
 					checkpoint.pt = 0;
-					state.stage = 0;
+					state.gameplay.stage = 0;
 					return;
 				}
 				checkpoint.pt = 0;
 				checkpoint.lvl++;
-				state.stage = 0;
+				state.gameplay.stage = 0;
 				if (checkpoint.lvl > lvldata.length - 1) {
 					checkpoint.lvl = 0;
 				}
 			} else if (e.which === 76) {
-				var lvl = prompt('Jump to Level');
-				if (lvl == null) {
-					return;
-				}
-				lvl--;
-				checkpoint.lvl = lvl;
-				checkpoint.pt = 0;
-				state.ui = 'gameplay';
-				state.lvleditdata = null;
-				state.stage = 0;
+				state.ui = 'lvlselect';
+				state.lvledit.lvleditdata = null;
+				state.gameplay.stage = 0;
 			} else if (e.which === 69) {
 				var lvl = prompt('Edit Level');
 				if (lvl == null) {
@@ -808,7 +928,7 @@
 				lvl--;
 				if (lvl == -1) {
 					state.ui = 'lvledit';
-					state.lvleditdata = {
+					state.lvledit.lvleditdata = {
 						tuttext: ['', '', '', ''],
 						pts: [
 							{
@@ -823,48 +943,113 @@
 					};
 					checkpoint.lvl = 0;
 				} else {
-					state.lvleditdata = lvldata[lvl];
+					state.lvledit.lvleditdata = lvldata[lvl];
 					checkpoint.lvl = lvl;
 					state.ui = 'lvledit';
 				}
-			} else if (e.which === 80 && state.lvleditdata) {
+			} else if (e.which === 80 && state.lvledit.lvleditdata) {
 				if (state.ui == 'gameplay') {
 					state.ui = 'lvledit';
 				} else {
 					state.ui = 'gameplay';
-					state.stage = 0;
+					state.gameplay.stage = 0;
 					checkpoint.pt = 0;
 				}
 			}
+			if (state.ui == 'lvlselect') {
+				if (e.which === 87 || e.which === 38) {
+					if (state.lvlselect.ongamemode) {
+						state.lvlselect.gamemode--;
+					} else {
+						state.lvlselect.selectedlvl--;
+					}
+				} else if (e.which === 83 || e.which === 40) {
+					if (state.lvlselect.ongamemode) {
+						state.lvlselect.gamemode++;
+					} else {
+						state.lvlselect.selectedlvl++;
+					}
+				} else if (e.which === 13) {
+					if (state.lvlselect.gamemode == 0) {
+						if (state.lvlselect.selectedlvl == constantstate.latestunlocked.lvl) {
+							checkpoint.lvl = state.lvlselect.selectedlvl;
+							checkpoint.pt = constantstate.latestunlocked.pt;
+							state.lvledit.lvleditdata = null;
+							state.gameplay.stage = 0;
+							state.ui = 'gameplay';
+						} else if (state.lvlselect.selectedlvl < constantstate.latestunlocked.lvl) {
+							checkpoint.lvl = state.lvlselect.selectedlvl;
+							checkpoint.pt = 0;
+							state.lvledit.lvleditdata = null;
+							state.gameplay.stage = 0;
+							state.ui = 'gameplay';
+						}
+					} else if (state.lvlselect.gamemode == 2) {
+						state.lvledit.lvleditdata = lvldata[state.lvlselect.selectedlvl];
+						checkpoint.lvl = state.lvlselect.selectedlvl;
+						state.ui = 'lvledit';
+					} else if (state.lvlselect.gamemode == 3) {
+						state.ui = 'lvledit';
+						state.lvledit.lvleditdata = {
+							tuttext: ['', '', '', ''],
+							pts: [
+								{
+									x: 200,
+									y: 400,
+									type: 'checkpoint',
+									thickness: 20
+								},
+							],
+							fusespeed: 0,
+							name: 'Untitled Level'
+						};
+						checkpoint.lvl = 0;
+					}
+				} else if (e.which === 65 || e.which === 68 || e.which === 37 || e.which === 39) {
+					state.lvlselect.ongamemode = !state.lvlselect.ongamemode;
+				}
+				if (state.lvlselect.selectedlvl < 0) {
+					state.lvlselect.selectedlvl = lvldata.length - 1;
+				}
+				if (state.lvlselect.selectedlvl > lvldata.length - 1) {
+					state.lvlselect.selectedlvl = 0;
+				}
+				if (state.lvlselect.gamemode > state.lvlselect.gamemodes.length - 1) {
+					state.lvlselect.gamemode = 0;
+				}
+				if (state.lvlselect.gamemode < 0) {
+					state.lvlselect.gamemode = state.lvlselect.gamemodes.length - 1;
+				}
+			}
 			if (state.ui == 'lvledit') {
-				var pts = state.lvleditdata.pts;
-				var tuttext = state.lvleditdata.tuttext;
-				var selectedpt = pts[state.editpt];
+				var pts = state.lvledit.lvleditdata.pts;
+				var tuttext = state.lvledit.lvleditdata.tuttext;
+				var selectedpt = pts[state.lvledit.editpt];
 				if (e.which === 37) {
-					state.editpt--;
+					state.lvledit.editpt--;
 				} else if (e.which === 39) {
-					state.editpt++;
+					state.lvledit.editpt++;
 				} else if (e.which === 87) {
-					selectedpt.y -= state.editstepsize;
+					selectedpt.y -= state.lvledit.editstepsize;
 				} else if (e.which === 83) {
-					selectedpt.y += state.editstepsize;
+					selectedpt.y += state.lvledit.editstepsize;
 				} else if (e.which === 65) {
-					selectedpt.x -= state.editstepsize;
+					selectedpt.x -= state.lvledit.editstepsize;
 				} else if (e.which === 68) {
-					selectedpt.x += state.editstepsize;
+					selectedpt.x += state.lvledit.editstepsize;
 				} else if (e.which === 187) {
-					pts.splice(state.editpt + 1, 0, {
+					pts.splice(state.lvledit.editpt + 1, 0, {
 						x: selectedpt.x,
 						y: selectedpt.y,
 						type: 'midpoint',
 						thickness: 20
 					});
-					state.editpt++;
+					state.lvledit.editpt++;
 				} else if (e.which === 189) {
 					if (pts.length > 1) {
-						pts.splice(state.editpt, 1);
+						pts.splice(state.lvledit.editpt, 1);
 					}
-					state.editpt--;
+					state.lvledit.editpt--;
 				} else if (e.which === 67) {
 					selectedpt.type = 'checkpoint';
 				} else if (e.which === 77) {
@@ -904,14 +1089,14 @@
 					if (p == null || p < 0) {
 						return;
 					}
-					state.lvleditdata.fusespeed = p;
+					state.lvledit.lvleditdata.fusespeed = p;
 				} else if (e.which === 74) {
 					for (var i = 0; i < pts.length; i++) {
 						pts[i].animation = null;
 					}
-					navigator.clipboard.writeText(JSON.stringify(state.lvleditdata));
-					state.lvledittext = 'JSON saved, copied to clipboard'
-					window.setTimeout(function() {state.lvledittext = 'Level editor'}, 2000);
+					navigator.clipboard.writeText(JSON.stringify(state.lvledit.lvleditdata));
+					state.lvledit.lvledittext = 'JSON saved, copied to clipboard'
+					window.setTimeout(function() {state.lvledit.lvledittext = 'Level editor'}, 2000);
 				} else if (e.which === 79) {
 					var json = prompt('Level data');
 					if (json == null) {
@@ -924,45 +1109,46 @@
 						alert('Failed to parse level JSON');
 						return;
 					}
-					state.lvleditdata = loadedlvl;
-					state.lvledittext = 'JSON loaded';
-					state.lvlformatchecked = -1;
-					window.setTimeout(function() {state.lvledittext = 'Level editor'}, 2000);
+					state.lvledit.lvleditdata = loadedlvl;
+					state.lvledit.lvledittext = 'JSON loaded';
+					state.common.lvlformatchecked = -1;
+					window.setTimeout(function() {state.lvledit.lvledittext = 'Level editor'}, 2000);
 				} else if (e.which === 78) {
 					var name = prompt('Name');
 					if (name == null || !name) {
 						return;
 					}
-					state.lvleditdata.name = name;
+					state.lvledit.lvleditdata.name = name;
 				} else if (e.which === 190) {
-					if (state.showstepsize) {
-						state.editstepsize *= 2;
+					if (state.lvledit.showstepsize) {
+						state.lvledit.editstepsize *= 2;
 					} else {
-						state.showstepsize = true;
+						state.lvledit.showstepsize = true;
 					}
 					return;
 				} else if (e.which === 188) {
-					if (state.showstepsize) {
-						state.editstepsize /= 2;
+					if (state.lvledit.showstepsize) {
+						state.lvledit.editstepsize /= 2;
 					} else {
-						state.showstepsize = true;
+						state.lvledit.showstepsize = true;
 					}
 					return;
 				} else if (e.which === 71) {
-					state.editgrid = !state.editgrid;
+					state.lvledit.editgrid = !state.lvledit.editgrid;
 				} else if (e.which === 81) {
 					selectedpt.type = 'curve';
 				}
-				if (state.editpt < 0) {
-					state.editpt = pts.length - 1;
+				if (state.lvledit.editpt < 0) {
+					state.lvledit.editpt = pts.length - 1;
 				}
-				if (state.editpt >= pts.length) {
-					state.editpt = 0;
+				if (state.lvledit.editpt >= pts.length) {
+					state.lvledit.editpt = 0;
 				}
-				state.showstepsize = false;
+				state.lvledit.showstepsize = false;
 			}
 		});
 		requestAnimationFrame(loop);
 		</script>
-	</body>
-</html>
+
+
+</body></html>
