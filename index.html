@@ -924,6 +924,7 @@
 					state.ui = 'lvlselect';
 					state.lvledit.lvleditdata = null;
 					state.gameplay.stage = 0;
+					state.lvlselect..selectedlvl = checkpoint.lvl;
 				}
 				checkpoint.pt = 0;
 				checkpoint.lvl++;
@@ -935,6 +936,7 @@
 				state.ui = 'lvlselect';
 				state.lvledit.lvleditdata = null;
 				state.gameplay.stage = 0;
+				state.lvlselect..selectedlvl = checkpoint.lvl;
 			} else if (e.which === 80 && state.lvledit.lvleditdata) {
 				if (state.ui == 'gameplay') {
 					state.ui = 'lvledit';
