@@ -172,8 +172,16 @@
 			constantstate = JSON.parse(document.cookie)
 		} catch {}
 
+		if (!constantstate.latestunlocked || typeof(constantstate.latestunlocked.lvl) != "number" || typeof(constantstate.latestunlocked.pt) != "number") {
+			constantstate.latestunlocked = {
+				lvl: 0,
+				pt: 0
+			}
+			saveconstantstate();
+		}
+
 		function saveconstantstate() {
-			document.cookie = constantstate.stringify;
+			document.cookie = JSON.stringify(constantstate);
 		}
 
 		var animations = {
@@ -922,33 +930,6 @@
 				state.ui = 'lvlselect';
 				state.lvledit.lvleditdata = null;
 				state.gameplay.stage = 0;
-			} else if (e.which === 69) {
-				var lvl = prompt('Edit Level');
-				if (lvl == null) {
-					return;
-				}
-				lvl--;
-				if (lvl == -1) {
-					state.ui = 'lvledit';
-					state.lvledit.lvleditdata = {
-						tuttext: ['', '', '', ''],
-						pts: [
-							{
-								x: 200,
-								y: 400,
-								type: 'checkpoint',
-								thickness: 20
-							},
-						],
-						fusespeed: 0,
-						name: 'Untitled Level'
-					};
-					checkpoint.lvl = 0;
-				} else {
-					state.lvledit.lvleditdata = lvldata[lvl];
-					checkpoint.lvl = lvl;
-					state.ui = 'lvledit';
-				}
 			} else if (e.which === 80 && state.lvledit.lvleditdata) {
 				if (state.ui == 'gameplay') {
 					state.ui = 'lvledit';
