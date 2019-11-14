@@ -185,6 +185,12 @@
 			saveconstantstate();
 		}
 
+		if (constantstate.latestunlocked.lvl > lvldata.length - 1) {
+			state.lvlselect.selectedlvl = lvldata.length - 1;
+		} else {
+			state.lvlselect.selectedlvl = constantstate.latestunlocked.lvl;
+		}
+
 		function saveconstantstate() {
 			document.cookie = JSON.stringify(constantstate);
 		}
