@@ -141,7 +141,9 @@
 			gameplay: {
 				stage: 0,
 				fuseoffset: 0,
-				oncheckpoint: false
+				oncheckpoint: false,
+				ghostrecord: {
+				}
 			},
 			lvledit: {
 				lvleditdata: null,
@@ -171,7 +173,8 @@
 			latestunlocked: {
 				lvl: 0,
 				pt: 0
-			}
+			},
+			ghostrecords: []
 		}
 		try {
 			constantstate = JSON.parse(document.cookie)
@@ -181,7 +184,7 @@
 			constantstate.latestunlocked = {
 				lvl: 0,
 				pt: 0
-			}
+			};
 			saveconstantstate();
 		}
 
