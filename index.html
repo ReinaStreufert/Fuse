@@ -1083,11 +1083,16 @@
 				} else if (e.which === 68) {
 					selectedpt.x += state.lvledit.editstepsize;
 				} else if (e.which === 187) {
+					type = 'midpoint';
+					if (selectedpt.type == 'curve') {
+						type = 'curve';
+					}
 					pts.splice(state.lvledit.editpt + 1, 0, {
 						x: selectedpt.x,
 						y: selectedpt.y,
-						type: 'midpoint',
-						thickness: 20
+						type: type,
+						thickness: 20,
+						color: selectedpt.color
 					});
 					state.lvledit.editpt++;
 				} else if (e.which === 189) {
