@@ -296,9 +296,9 @@
 
 		function addcurve(path, curve, res) {
 			for (var i = 0; i <= 1; i += res) {
-				var pts = calculatecurve(curve, i);
-				pts.color = curve[curve.length - 1].color;
-				path.push(pts);
+				var pt = calculatecurve(curve, i);
+				pt.color = curve[curve.length - 1].color;
+				path.push(pt);
 			}
 		}
 
@@ -330,24 +330,20 @@
 					newpathpoints.push({x: pathpoint.x, y: pathpoint.y, type: pathpoint.type, color: pathpoint.color});
 				}
 		  }
-		var current = newpathpoints[newpathpoints.length - 1];
-		if (current.length > 0) {
-			if (current.length >= 3) {
-				newpathpoints.splice(newpathpoints.length - 1, 1);
-				addcurve(newpathpoints, current, 0.01);
-				newpathpoints.push({x: pathpoint.x, y: pathpoint.y, type: pathpoint.type, color: pathpoint.color});
-			} else {
-				newpathpoints.splice(newpathpoints.length - 1, 1);
-				for (ii = 0; ii < current.length; ii++) {
-					newpathpoints.push(current[ii]);
+			var current = newpathpoints[newpathpoints.length - 1];
+			if (current.length > 0) {
+				if (current.length >= 3) {
+					newpathpoints.splice(newpathpoints.length - 1, 1);
+					addcurve(newpathpoints, current, 0.01);
+					newpathpoints.push({x: pathpoint.x, y: pathpoint.y, type: pathpoint.type, color: pathpoint.color});
+				} else {
+					newpathpoints.splice(newpathpoints.length - 1, 1);
+					for (ii = 0; ii < current.length; ii++) {
+						newpathpoints.push(current[ii]);
+					}
+					newpathpoints.push({x: pathpoint.x, y: pathpoint.y, type: pathpoint.type, color: pathpoint.color});
 				}
-				newpathpoints.push({x: pathpoint.x, y: pathpoint.y, type: pathpoint.type, color: pathpoint.color});
 			}
-		}
-		//if (pathpoints[0].type == "checkpoint") {
-		//	newpathpoints[0].type = "checkpoint";
-		//}
-
 		  var offsetleft = offset;
 		  for (var i = 0; i < newpathpoints.length - 1; i++) {
 		    var pathpoint = newpathpoints[i];
@@ -544,33 +540,56 @@
 				if (state.gameplay.oncheckpoint) {
 					state.gameplay.lastcolor = -1;
 				}
+				var currentcolor = drawnpoints[0].color;
 				for (var i = 0; i < drawnpoints.length; i++) {
 					var pt = drawnpoints[i];
 					if (i > 0) {
-						if (pt.color == 1) {
-							ctx.strokeStyle = 'red';
-						} else if (pt.color == 2) {
-							ctx.strokeStyle = 'green';
-						} else if (pt.color == 3) {
-							ctx.strokeStyle = 'purple';
+						if (pt.color != currentcolor) {
+							if (currentcolor == 1) {
+								ctx.strokeStyle = 'red';
+							} else if (currentcolor == 2) {
+								ctx.strokeStyle = 'green';
+							} else if (currentcolor == 3) {
+								ctx.strokeStyle = 'purple';
+							} else {
+								ctx.strokeStyle = 'DodgerBlue';
+							}
+							currentcolor = pt.color;
+							ctx.stroke();
+							if (ctx.isPointInStroke(mouseX, mouseY)) {
+								if (state.gameplay.lastcolor == -1) {
+									state.gameplay.lastcolor = pt.color;
+								}
+								if (state.gameplay.lastcolor == pt.color) {
+									cursoronsomething = true;
+								}
+							}
+							ctx.beginPath();
+							ctx.moveTo(drawnpoints[i - 1].x, drawnpoints[i - 1].y);
+							ctx.lineTo(pt.x, pt.y);
 						} else {
-							ctx.strokeStyle = 'DodgerBlue';
+							ctx.lineTo(pt.x, pt.y);
 						}
-						ctx.lineTo(pt.x, pt.y);
-						ctx.stroke();
-						if (ctx.isPointInStroke(mouseX, mouseY)) {
-							if (state.gameplay.lastcolor == -1) {
-								state.gameplay.lastcolor = pt.color;
-							}
-							if (state.gameplay.lastcolor == pt.color) {
-								cursoronsomething = true;
-							}
-						}
-						ctx.beginPath();
-						ctx.moveTo(pt.x, pt.y);
 					} else {
 						ctx.beginPath();
 						ctx.moveTo(pt.x, pt.y);
+					}
+				}
+				if (currentcolor == 1) {
+					ctx.strokeStyle = 'red';
+				} else if (currentcolor == 2) {
+					ctx.strokeStyle = 'green';
+				} else if (currentcolor == 3) {
+					ctx.strokeStyle = 'purple';
+				} else {
+					ctx.strokeStyle = 'DodgerBlue';
+				}
+				if (ctx.isPointInStroke(mouseX, mouseY)) {
+					if (state.gameplay.lastcolor == -1) {
+						state.gameplay.lastcolor = pt.color;
+					}
+					if (state.gameplay.lastcolor == pt.color) {
+						cursoronsomething = true;
 					}
 				}
 				ctx.stroke();
@@ -771,26 +790,41 @@
 				ctx.lineWidth = pts[0].thickness;
 				//ctx.beginPath();
 				ctx.lineCap = 'round';
+				var currentcolor = drawnpoints[0].color;
 				for (var i = 0; i < drawnpoints.length; i++) {
 					var pt = drawnpoints[i];
 					if (i > 0) {
-						if (pt.color == 1) {
-							ctx.strokeStyle = 'red';
-						} else if (pt.color == 2) {
-							ctx.strokeStyle = 'green';
-						} else if (pt.color == 3) {
-							ctx.strokeStyle = 'purple';
+						if (pt.color != currentcolor) {
+							if (currentcolor == 1) {
+								ctx.strokeStyle = 'red';
+							} else if (currentcolor == 2) {
+								ctx.strokeStyle = 'green';
+							} else if (currentcolor == 3) {
+								ctx.strokeStyle = 'purple';
+							} else {
+								ctx.strokeStyle = 'DodgerBlue';
+							}
+							currentcolor = pt.color;
+							ctx.stroke();
+							ctx.beginPath();
+							ctx.moveTo(drawnpoints[i - 1].x, drawnpoints[i - 1].y);
+							ctx.lineTo(pt.x, pt.y);
 						} else {
-							ctx.strokeStyle = 'DodgerBlue';
+							ctx.lineTo(pt.x, pt.y);
 						}
-						ctx.lineTo(pt.x, pt.y);
-						ctx.stroke();
-						ctx.beginPath();
-						ctx.moveTo(pt.x, pt.y);
 					} else {
 						ctx.beginPath();
 						ctx.moveTo(pt.x, pt.y);
 					}
+				}
+				if (currentcolor == 1) {
+					ctx.strokeStyle = 'red';
+				} else if (currentcolor == 2) {
+					ctx.strokeStyle = 'green';
+				} else if (currentcolor == 3) {
+					ctx.strokeStyle = 'purple';
+				} else {
+					ctx.strokeStyle = 'DodgerBlue';
 				}
 				ctx.stroke();
 				ctx.lineWidth = 10;
