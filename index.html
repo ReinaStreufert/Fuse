@@ -118,7 +118,8 @@
 				lvledittext: 'Level editor',
 				editstepsize: 50,
 				showstepsize: false,
-				editgrid: true
+				editgrid: true,
+				keybindingsshown: false
 			},
 			common: {
 				lvlformatchecked: -1,
@@ -188,12 +189,16 @@
 		//state.ui = 'gameplay';	// for debugging, comment out when there is a level select screen
 
 		function getLines(ctx, text, maxWidth) {
-			var words = text.split(" ");
+			var words = text.split(/ |;/g);
 			var lines = [];
 			var currentLine = words[0];
-
 			for (var i = 1; i < words.length; i++) {
 				var word = words[i];
+				if (word == "") {
+					lines.push(currentLine);
+					currentLine = "";
+					continue;
+				}
 				var width = ctx.measureText(currentLine + " " + word).width;
 				if (width < maxWidth) {
 					currentLine += " " + word;
@@ -916,6 +921,16 @@
 				ctx.fillStyle = 'DodgerBlue';
 				drawWrappedText(state.lvledit.lvledittext, canvas.width / 2, canvas.height / 2 + 280, 40, 10);
 				drawWrappedText(lvl.name, canvas.width / 2, canvas.height / 2 - 250, 40, 10);
+				if (state.lvledit.keybindingsshown) {
+					ctx.fillStyle = '#000000AA';
+					ctx.fillRect(0, 0, canvas.width, canvas.height);
+					ctx.font = "100 40px Roboto";
+					ctx.textAlign = "left";
+					ctx.fillStyle = "white";
+					drawWrappedText("Level Editor Keybindings", 50, 75, 40, 10);
+					ctx.font = "100 15px Roboto";
+					drawWrappedText("View/Navigation;;k - Show/hide this menu;;p - Toggle play test mode;;g - Show/hide gridlines;;l - Go back to level select;;;;Level Settings/Info;;n - Set level name;;f - Set fuse speed;;t - Set line thickness;;0 through 3 - Set tutorial text by stage. Stage 0 is very beginning, stage 1 is after the beginning checkpoint was hovered on, stage 2 is leaving the checkpoint onto the line, stage 3 is completing the level;;;;Path Manipulation;;wasd - Move selected point;;+/= - Insert new point;;- - Remove selected point;;Left arrow key - Select select back a point;;Right arrow key - Select forward a point;;m - Make selected point a midpoint;;c - Make selected point a checkpoint;;z - Make selected point a switchpoint;;q - Make selected point a curvepoint;;r - Cycle through line colors;;>/. - Double step size (How far the selected point moves with wasd);;<, - Half step size;;;;File;;j - Save level as JSON;;o - Open level by JSON", 50, 110, 15, 5);
+				}
 			} else if (state.ui == "lvlselect") {
 				var selectedlvl = lvldata[state.lvlselect.selectedlvl];
 				ctx.font = '100 40px Roboto';
@@ -1076,8 +1091,10 @@
 						state.lvledit.lvleditdata = lvldata[state.lvlselect.selectedlvl];
 						checkpoint.lvl = state.lvlselect.selectedlvl;
 						state.ui = 'lvledit';
+						state.lvledit.keybindingsshown = true;
 					} else if (state.lvlselect.gamemode == 3) {
 						state.ui = 'lvledit';
+						state.lvledit.keybindingsshown = true;
 						state.lvledit.lvleditdata = {
 							tuttext: ['', '', '', ''],
 							pts: [
@@ -1111,6 +1128,14 @@
 				}
 			}
 			if (state.ui == 'lvledit') {
+				if (state.lvledit.ketbindingsshown) {
+					if (e.which === 75) {
+						state.lvledit.keybindingsshown = !state.lvledit.keybindingsshown;
+					}
+					if (state.lvledit.keybindingsshown) {
+						return;
+					}
+				}
 				var pts = state.lvledit.lvleditdata.pts;
 				var tuttext = state.lvledit.lvleditdata.tuttext;
 				var selectedpt = pts[state.lvledit.editpt];
