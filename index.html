@@ -184,6 +184,12 @@
 				g: 0,
 				b: 0,
 				a: 0
+			},
+			keybindings: {
+				r: 0,
+				g: 0,
+				b: 0,
+				a: 0
 			}
 		}
 		//state.ui = 'gameplay';	// for debugging, comment out when there is a level select screen
@@ -921,9 +927,17 @@
 				ctx.fillStyle = 'DodgerBlue';
 				drawWrappedText(state.lvledit.lvledittext, canvas.width / 2, canvas.height / 2 + 280, 40, 10);
 				drawWrappedText(lvl.name, canvas.width / 2, canvas.height / 2 - 250, 40, 10);
+
+				var r = 0;
+				var g = 0;
+				var b = 0;
+				var a = 0;
 				if (state.lvledit.keybindingsshown) {
-					ctx.fillStyle = '#000000AA';
-					ctx.fillRect(0, 0, canvas.width, canvas.height);
+					a = 170;
+				}
+				ctx.fillStyle = doAnimation(animations.keybindings, state.lvledit.keybindingsshown, r, g, b, a);
+				ctx.fillRect(0, 0, canvas.width, canvas.height);
+				if (state.lvledit.keybindingsshown) {
 					ctx.font = "100 40px Roboto";
 					ctx.textAlign = "left";
 					ctx.fillStyle = "white";
@@ -1036,6 +1050,7 @@
 				if (checkpoint.lvl == lvldata.length - 1) {
 					state.ui = 'lvlselect';
 					state.lvledit.lvleditdata = null;
+					state.lvledit.editpt = null;
 					state.gameplay.stage = 0;
 					state.lvlselect.selectedlvl = checkpoint.lvl;
 				}
@@ -1048,6 +1063,7 @@
 			} else if (e.which === 76) {
 				state.ui = 'lvlselect';
 				state.lvledit.lvleditdata = null;
+				state.lvledit.editpt = 0;
 				state.gameplay.stage = 0;
 				state.lvlselect.selectedlvl = checkpoint.lvl;
 			} else if (e.which === 80 && state.lvledit.lvleditdata) {
@@ -1128,13 +1144,11 @@
 				}
 			}
 			if (state.ui == 'lvledit') {
-				if (state.lvledit.ketbindingsshown) {
-					if (e.which === 75) {
-						state.lvledit.keybindingsshown = !state.lvledit.keybindingsshown;
-					}
-					if (state.lvledit.keybindingsshown) {
-						return;
-					}
+				if (e.which === 75) {
+					state.lvledit.keybindingsshown = !state.lvledit.keybindingsshown;
+				}
+				if (state.lvledit.keybindingsshown) {
+					return;
 				}
 				var pts = state.lvledit.lvleditdata.pts;
 				var tuttext = state.lvledit.lvleditdata.tuttext;
