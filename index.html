@@ -110,7 +110,8 @@
 				oncheckpoint: false,
 				ghostrecord: {
 				},
-				lastcolor: -1
+				lastcolor: -1,
+				dashOffset: 0
 			},
 			lvledit: {
 				lvleditdata: null,
@@ -300,23 +301,23 @@
 					current = [];
 				}
 				if (pathpoint.type == "curve" && current.length > 0) {
-					current.push({x: pathpoint.x, y: pathpoint.y, type: pathpoint.type, color: pathpoint.color});
+					current.push({x: pathpoint.x, y: pathpoint.y, type: pathpoint.type, color: pathpoint.color, dash: pathpoint.dash});
 				} else if (pathpoint.type == "curve") {
-					newpathpoints.push([{x: pathpoint.x, y: pathpoint.y, type: pathpoint.type, color: pathpoint.color}]);
+					newpathpoints.push([{x: pathpoint.x, y: pathpoint.y, type: pathpoint.type, color: pathpoint.color, dash: pathpoint.dash}]);
 				} else if (current.length > 0) {
 					if (current.length >= 3) {
 						newpathpoints.splice(newpathpoints.length - 1, 1);
 						addcurve(newpathpoints, current, 10);
-						newpathpoints.push({x: pathpoint.x, y: pathpoint.y, type: pathpoint.type, color: pathpoint.color});
+						newpathpoints.push({x: pathpoint.x, y: pathpoint.y, type: pathpoint.type, color: pathpoint.color, dash: pathpoint.dash});
 					} else {
 						newpathpoints.splice(newpathpoints.length - 1, 1);
 						for (ii = 0; ii < current.length; ii++) {
 							newpathpoints.push(current[ii]);
 						}
-						newpathpoints.push({x: pathpoint.x, y: pathpoint.y, type: pathpoint.type, color: pathpoint.color});
+						newpathpoints.push({x: pathpoint.x, y: pathpoint.y, type: pathpoint.type, color: pathpoint.color, dash: pathpoint.dash});
 					}
 				} else {
-					newpathpoints.push({x: pathpoint.x, y: pathpoint.y, type: pathpoint.type, color: pathpoint.color});
+					newpathpoints.push({x: pathpoint.x, y: pathpoint.y, type: pathpoint.type, color: pathpoint.color, dash: pathpoint.dash});
 				}
 		  }
 			var current = newpathpoints[newpathpoints.length - 1];
@@ -324,13 +325,13 @@
 				if (current.length >= 3) {
 					newpathpoints.splice(newpathpoints.length - 1, 1);
 					addcurve(newpathpoints, current, 10);
-					newpathpoints.push({x: pathpoint.x, y: pathpoint.y, type: pathpoint.type, color: pathpoint.color});
+					newpathpoints.push({x: pathpoint.x, y: pathpoint.y, type: pathpoint.type, color: pathpoint.color, dash: pathpoint.dash});
 				} else {
 					newpathpoints.splice(newpathpoints.length - 1, 1);
 					for (ii = 0; ii < current.length; ii++) {
 						newpathpoints.push(current[ii]);
 					}
-					newpathpoints.push({x: pathpoint.x, y: pathpoint.y, type: pathpoint.type, color: pathpoint.color});
+					newpathpoints.push({x: pathpoint.x, y: pathpoint.y, type: pathpoint.type, color: pathpoint.color, dash: pathpoint.dash});
 				}
 			}
 		  var offsetleft = offset;
@@ -440,6 +441,12 @@
 						pt.color = 0;
 					}
 				}
+				if (typeof(pt.dash) != "object" || pt.dash.length < 1) {
+					formatcorrect = false;
+					if (repair) {
+						pt.dash = [0];
+					}
+				}
 			}
 			if (typeof(lvl.fusespeed) != "number" || lvl.fusespeed < 0) {
 				formatcorrect = false;
@@ -526,6 +533,25 @@
 					beginoffset = 0;
 				}
 				var drawnpoints = offsetpath(pts, state.gameplay.fuseoffset);
+
+				//<experimental>
+				var dashadd = 0 - (fusespeed / 60);
+				if (fusespeed < 100) {
+					dashadd = 0 - (100 / 60);
+				}
+				//var diff = state.gameplay.dashOffset + dashadd + state.gameplay.fuseoffset - state.gameplay.dashOffset;
+				/*if (diff == 0 || diff >= fusespeed * 2) {
+					state.gameplay.dashOffset += dashadd;
+					ctx.lineDashOffset = state.gameplay.dashOffset + state.gameplay.fuseoffset;
+				} else {
+					state.gameplay.dashOffset += dashadd;
+					ctx.lineDashOffset = state.gameplay.dashOffset;
+				}*/
+				//dashadd = diff - state.gameplay.fuseoffset;
+				state.gameplay.dashOffset += dashadd;
+				ctx.lineDashOffset = state.gameplay.dashOffset + state.gameplay.fuseoffset;
+				//</experimental>
+
 				if (state.gameplay.stage == 2 && drawnpoints.length > 1 && !(state.gameplay.fuseoffset >= beginoffset && state.gameplay.oncheckpoint)) {
 					state.gameplay.fuseoffset += fusespeed / 60;
 				} else if (state.gameplay.fuseoffset != beginoffset) {
@@ -533,17 +559,24 @@
 				}
 				ctx.lineWidth = pts[0].thickness;
 				//ctx.beginPath();
-				ctx.lineCap = 'round';
+				//ctx.lineCap = 'round';
 				if (state.gameplay.oncheckpoint) {
 					state.gameplay.lastcolor = -1;
 				}
 				var currentcolor = drawnpoints[0].color;
+				var currentdash = drawnpoints[0].dash;
 				for (var i = 0; i < drawnpoints.length; i++) {
 					var pt = drawnpoints[i];
 					if (i > 0) {
-						if (pt.color != currentcolor) {
+						if (pt.color != currentcolor || pt.dash != currentdash) {
+							if (currentdash[0] != 0) {
+								ctx.strokeStyle = "#DDDDDD";
+								ctx.stroke();
+							}
 							ctx.strokeStyle = linecolors[currentcolor];
+							ctx.setLineDash(currentdash);
 							currentcolor = pt.color;
+							currentdash = pt.dash;
 							ctx.stroke();
 							if (ctx.isPointInStroke(mouseX, mouseY)) {
 								if (state.gameplay.lastcolor == -1) {
@@ -553,6 +586,7 @@
 									cursoronsomething = true;
 								}
 							}
+							ctx.setLineDash([0]);
 							ctx.beginPath();
 							ctx.moveTo(drawnpoints[i - 1].x, drawnpoints[i - 1].y);
 							ctx.lineTo(pt.x, pt.y);
@@ -572,6 +606,11 @@
 						ctx.moveTo(pt.x, pt.y);
 					}
 				}
+				if (currentdash[0] != 0) {
+					ctx.strokeStyle = "#DDDDDD";
+					ctx.stroke();
+				}
+				ctx.setLineDash(currentdash);
 				ctx.strokeStyle = linecolors[currentcolor];
 				if (ctx.isPointInStroke(mouseX, mouseY)) {
 					if (state.gameplay.lastcolor == -1) {
@@ -582,6 +621,7 @@
 					}
 				}
 				ctx.stroke();
+				ctx.setLineDash([0]);
 				ctx.lineWidth = 10;
 				for (var i = 0; i < switchpts.length; i++) {
 					var switchpt = switchpts[i];
@@ -801,15 +841,23 @@
 				var drawnpoints = offsetpath(pts, 0);
 				ctx.lineWidth = pts[0].thickness;
 				//ctx.beginPath();
-				ctx.lineCap = 'round';
 				var currentcolor = drawnpoints[0].color;
+				var currentdash = drawnpoints[0].dash;
+				ctx.lineCap = 'round';
 				for (var i = 0; i < drawnpoints.length; i++) {
 					var pt = drawnpoints[i];
 					if (i > 0) {
-						if (pt.color != currentcolor) {
+						if (pt.color != currentcolor || pt.dash != currentdash) {
+							if (currentdash[0] != 0) {
+								ctx.strokeStyle = "#DDDDDD";
+								ctx.stroke();
+							}
+							ctx.setLineDash(currentdash);
 							ctx.strokeStyle = linecolors[currentcolor];
 							currentcolor = pt.color;
+							currentdash = pt.dash;
 							ctx.stroke();
+							ctx.setLineDash([0]);
 							ctx.beginPath();
 							ctx.moveTo(drawnpoints[i - 1].x, drawnpoints[i - 1].y);
 							ctx.lineTo(pt.x, pt.y);
@@ -821,8 +869,14 @@
 						ctx.moveTo(pt.x, pt.y);
 					}
 				}
+				if (currentdash[0] != 0) {
+					ctx.strokeStyle = "#DDDDDD";
+					ctx.stroke();
+				}
+				ctx.setLineDash(currentdash);
 				ctx.strokeStyle = linecolors[currentcolor];
 				ctx.stroke();
+				ctx.setLineDash([0]);
 				ctx.lineWidth = 10;
 				for (var i = 0; i < checkpts.length; i++) {
 					checkpt = checkpts[i];
@@ -833,6 +887,7 @@
 					ctx.fill();
 					ctx.stroke();
 				}
+				ctx.setLineDash([0]);
 				var selectedpt = pts[state.lvledit.editpt];
 				if (curvepts.length > 1 && selectedpt.type == "curve") {
 					var currentcurvebeginpt;
@@ -1118,7 +1173,8 @@
 									y: 400,
 									type: 'checkpoint',
 									thickness: 20,
-									color: 0
+									color: 0,
+									dash: [0]
 								},
 							],
 							fusespeed: 0,
@@ -1174,7 +1230,8 @@
 						y: selectedpt.y,
 						type: type,
 						thickness: 20,
-						color: selectedpt.color
+						color: selectedpt.color,
+						dash: [0]
 					});
 					state.lvledit.editpt++;
 				} else if (e.which === 189) {
@@ -1277,6 +1334,18 @@
 					}
 				} else if (e.which === 90) {
 					selectedpt.type = 'switch';
+				} else if (e.which === 66) {
+					var l = Number(prompt('Dash length'));
+					if (l == null || l < 1) {
+						return;
+					}
+					var s = Number(prompt('Dash spacing'));
+					if (s == null || s < 1) {
+						return;
+					}
+					selectedpt.dash = [l, s];
+				} else if (e.which === 86) {
+					selectedpt.dash = [0];
 				}
 				if (selectedpt.color >= linecolors.length) {
 					selectedpt.color = 0;
