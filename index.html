@@ -88,6 +88,7 @@
 			//#30: Bass Drop
 			{"tuttext":["","","",""],"pts":[{"x":200,"y":200,"type":"checkpoint","thickness":20,"color":0,"animation":null,"filled":false},{"x":200,"y":400,"type":"midpoint","thickness":20,"color":0,"animation":null},{"x":325,"y":400,"type":"midpoint","thickness":20,"color":0,"animation":null},{"x":325,"y":350,"type":"midpoint","thickness":20,"color":0,"animation":null},{"x":350,"y":350,"type":"midpoint","thickness":20,"color":0,"animation":null},{"x":350,"y":450,"type":"midpoint","thickness":20,"color":0,"animation":null},{"x":375,"y":450,"type":"midpoint","thickness":20,"color":0,"animation":null},{"x":375,"y":300,"type":"midpoint","thickness":20,"color":0,"animation":null},{"x":400,"y":300,"type":"midpoint","thickness":20,"color":0,"animation":null},{"x":400,"y":500,"type":"midpoint","thickness":20,"color":0,"animation":null},{"x":425,"y":500,"type":"midpoint","thickness":20,"color":0,"animation":null},{"x":425,"y":250,"type":"midpoint","thickness":20,"color":0,"animation":null},{"x":450,"y":250,"type":"midpoint","thickness":20,"color":0,"animation":null},{"x":450,"y":550,"type":"midpoint","thickness":20,"color":0,"animation":null},{"x":475,"y":550,"type":"midpoint","thickness":20,"color":0,"animation":null},{"x":475,"y":200,"type":"midpoint","thickness":20,"color":0,"animation":null},{"x":500,"y":200,"type":"midpoint","thickness":20,"color":0,"animation":null},{"x":500,"y":600,"type":"midpoint","thickness":20,"color":0,"animation":null},{"x":525,"y":600,"type":"midpoint","thickness":20,"color":0,"animation":null},{"x":525,"y":250,"type":"midpoint","thickness":20,"color":0,"animation":null},{"x":550,"y":250,"type":"midpoint","thickness":20,"color":0,"animation":null},{"x":550,"y":550,"type":"midpoint","thickness":20,"color":0,"animation":null},{"x":575,"y":550,"type":"midpoint","thickness":20,"color":0,"animation":null},{"x":575,"y":300,"type":"midpoint","thickness":20,"color":0,"animation":null},{"x":600,"y":300,"type":"midpoint","thickness":20,"color":0,"animation":null},{"x":600,"y":500,"type":"midpoint","thickness":20,"color":0,"animation":null},{"x":625,"y":500,"type":"midpoint","thickness":20,"color":0,"animation":null},{"x":625,"y":350,"type":"midpoint","thickness":20,"color":0,"animation":null},{"x":650,"y":350,"type":"midpoint","thickness":20,"color":0,"animation":null},{"x":650,"y":450,"type":"midpoint","thickness":20,"color":0,"animation":null},{"x":675,"y":450,"type":"midpoint","thickness":20,"color":0,"animation":null},{"x":675,"y":400,"type":"midpoint","thickness":20,"color":0,"animation":null},{"x":800,"y":400,"type":"midpoint","thickness":20,"color":0,"animation":null},{"x":800,"y":600,"type":"checkpoint","thickness":20,"color":0,"animation":null,"filled":false}],"fusespeed":150,"name":"#30: Bass Drop"}
 		];
+
 		var frame = 0;
 		var canvas = document.getElementById('game');
 		var ctx = canvas.getContext('2d');
@@ -156,7 +157,12 @@
 			'green',
 			'blue',
 			'purple'
-		]
+		];
+
+		for (var i = 0; i < lvldata.length; i++) {
+			checklvlformat(lvldata[i], true);
+		}
+
 		try {
 			constantstate = JSON.parse(document.cookie)
 		} catch {}
