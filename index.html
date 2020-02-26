@@ -565,7 +565,7 @@
 				}
 				ctx.lineWidth = pts[0].thickness;
 				//ctx.beginPath();
-				//ctx.lineCap = 'round';
+				ctx.lineCap = 'round';
 				if (state.gameplay.oncheckpoint) {
 					state.gameplay.lastcolor = -1;
 				}
@@ -575,6 +575,9 @@
 					var pt = drawnpoints[i];
 					if (i > 0) {
 						if (pt.color != currentcolor || pt.dash != currentdash) {
+							if (!currentdash) {
+								currentdash = [0];
+							}
 							if (currentdash[0] != 0) {
 								ctx.strokeStyle = "#DDDDDD";
 								ctx.stroke();
@@ -854,6 +857,9 @@
 					var pt = drawnpoints[i];
 					if (i > 0) {
 						if (pt.color != currentcolor || pt.dash != currentdash) {
+							if (!currentdash) {
+								currentdash = [0];
+							}
 							if (currentdash[0] != 0) {
 								ctx.strokeStyle = "#DDDDDD";
 								ctx.stroke();
