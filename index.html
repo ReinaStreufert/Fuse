@@ -574,18 +574,18 @@
 				for (var i = 0; i < drawnpoints.length; i++) {
 					var pt = drawnpoints[i];
 					if (i > 0) {
-						if (pt.color != currentcolor || pt.dash != currentdash) {
-							if (!currentdash) {
+						if (pt.color != currentcolor) {// || pt.dash != currentdash) {
+							/*if (!currentdash) {
 								currentdash = [0];
 							}
 							if (currentdash[0] != 0) {
 								ctx.strokeStyle = "#DDDDDD";
 								ctx.stroke();
-							}
+							}*/
 							ctx.strokeStyle = linecolors[currentcolor];
-							ctx.setLineDash(currentdash);
+							//ctx.setLineDash(currentdash);
 							currentcolor = pt.color;
-							currentdash = pt.dash;
+							//currentdash = pt.dash;
 							ctx.stroke();
 							if (ctx.isPointInStroke(mouseX, mouseY)) {
 								if (state.gameplay.lastcolor == -1) {
@@ -615,11 +615,11 @@
 						ctx.moveTo(pt.x, pt.y);
 					}
 				}
-				if (currentdash[0] != 0) {
+				/*if (currentdash[0] != 0) {
 					ctx.strokeStyle = "#DDDDDD";
 					ctx.stroke();
-				}
-				ctx.setLineDash(currentdash);
+				}*/
+				//ctx.setLineDash(currentdash);
 				ctx.strokeStyle = linecolors[currentcolor];
 				if (ctx.isPointInStroke(mouseX, mouseY)) {
 					if (state.gameplay.lastcolor == -1) {
