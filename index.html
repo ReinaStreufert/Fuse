@@ -524,6 +524,7 @@
 				}
 				var curveless = offsetpath(pts, 0);
 				var c = 0;
+				//alert(JSON.stringify(curveless[0]));
 				for (var i = 0; i < curveless.length; i++) {
 					var pt = curveless[i];
 					if (pt.type == 'checkpoint') {
@@ -1256,7 +1257,7 @@
 				} else if (e.which === 77) {
 					selectedpt.type = 'midpoint';
 				} else if (e.which === 84) {
-					var p = Number(prompt('thickness (currently: ' + pts[0].thickness + ')'));
+					var p = Number(prompt('thickness'));
 					if (p == null || p < 1) {
 						return;
 					}
@@ -1286,7 +1287,7 @@
 					}
 					tuttext[3] = p;
 				} else if (e.which === 70) {
-					var p = Number(prompt('fuse speed (currently: ' + state.lvledit.lvleditdata.fusespeed + ')'));
+					var p = Number(prompt('fuse speed'));
 					if (p == null || p < 0) {
 						return;
 					}
